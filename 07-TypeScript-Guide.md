@@ -96,8 +96,22 @@ type ID = string | number;
 // Union types
 type Status = "active" | "inactive" | "pending";
 
-// Object type
+// Intersection types - Combine multiple types
 type User = {
+  name: string;
+  email: string;
+};
+
+type Admin = {
+  role: string;
+  permissions: string[];
+};
+
+type AdminUser = User & Admin;  // Has all properties from both
+// { name: string; email: string; role: string; permissions: string[] }
+
+// Object type
+type Person = {
   id: ID;
   name: string;
   status: Status;
@@ -142,9 +156,22 @@ interface User {
   age: number;
 }
 
-// Type - Unions and complex types
+// Interface extending
+interface Admin extends User {
+  role: string;
+}
+
+// Type - Unions
 type Status = "active" | "inactive";
-type Result = Success | Error;
+
+// Type - Intersections (combine types)
+type Timestamps = {
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type UserWithTimestamps = User & Timestamps;
+// { name: string; age: number; createdAt: Date; updatedAt: Date }
 ```
 
 **Recommendation**: Use `interface` for objects by default. Use `type` for everything else.
