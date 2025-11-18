@@ -1,0 +1,16 @@
+{
+  "name": "interviewprep-new",
+  "version": "1.0.0",
+  "description": "Complete study materials for frontend developer interviews covering HTML, CSS, JavaScript, APIs, React, Design Patterns, TypeScript, and NestJS.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon practice/personalPractice.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

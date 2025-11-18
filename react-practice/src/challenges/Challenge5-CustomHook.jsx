@@ -20,19 +20,54 @@ import { useState, useEffect } from 'react';
  * Time: 15-20 minutes
  */
 
-// TODO: Create useFetch custom hook here
+// Custom Hook
 const useFetch = (url) => {
-  // TODO: Implement the custom hook
-  // Return { data, loading, error }
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const result = await response.json();
+        if (isMounted) setData(result);
+      } catch (err) {
+        if (isMounted) setError(err.message);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => { isMounted = false };
+  }, [url]);
+
+  return { data, loading, error };
 };
 
 const Challenge5 = () => {
-  // TODO: Use the useFetch hook
+  const { data: todos, loading, error } = useFetch(
+    'https://jsonplaceholder.typicode.com/todos?_limit=5'
+  );
+
+  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
+  if (error) return <div style={{ padding: '20px' }}>Error: {error}</div>;
 
   return (
     <div style={{ padding: '20px' }}>
       <h2>Challenge 5: Custom Hook</h2>
-      {/* TODO: Display data using the custom hook */}
+      <ul>
+        {todos?.map(todo => (
+          <li key={todo.id}>
+            {todo.title} - {todo.completed ? '✅' : '❌'}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

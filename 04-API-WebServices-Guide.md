@@ -1,83 +1,301 @@
-# API & Web Services Interview Guide
+# API & Web Services - Interview Guide
 
-## REST API Fundamentals
+## HTTP Methods (CRUD Operations)
 
-### HTTP Methods
+**Why it matters**: Understanding HTTP methods is essential for building REST APIs in NestJS and consuming them in React.
+
+```javascript
+GET     - Retrieve data (Read)
+POST    - Create new resource (Create)
+PUT     - Replace entire resource (Update)
+PATCH   - Update specific fields (Update)
+DELETE  - Remove resource (Delete)
 ```
-GET     - Retrieve resource(s)
-POST    - Create new resource
-PUT     - Update/replace entire resource
-PATCH   - Partial update of resource
-DELETE  - Remove resource
-OPTIONS - Describe communication options
+
+### React Examples (ES6)
+
+```javascript
+// GET - Fetch data
+const fetchUsers = async () => {
+  const response = await fetch('https://api.example.com/users');
+  const data = await response.json();
+  return data;
+};
+
+// POST - Create new user
+const createUser = async (userData) => {
+  const response = await fetch('https://api.example.com/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData)
+  });
+  return await response.json();
+};
+
+// PUT - Replace entire user
+const updateUser = async (id, fullUserData) => {
+  const response = await fetch(`https://api.example.com/users/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fullUserData)
+  });
+  return await response.json();
+};
+
+// PATCH - Update specific fields
+const patchUser = async (id, updates) => {
+  const response = await fetch(`https://api.example.com/users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates) // Only fields to update
+  });
+  return await response.json();
+};
+
+// DELETE - Remove user
+const deleteUser = async (id) => {
+  const response = await fetch(`https://api.example.com/users/${id}`, {
+    method: 'DELETE'
+  });
+
+  // DELETE often returns 204 No Content
+  if (response.status === 204) return;
+  return await response.json();
+};
 ```
 
-### HTTP Status Codes
+### NestJS Examples
+
+```typescript
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param } from '@nestjs/common';
+
+@Controller('users')
+export class UsersController {
+  // GET /users - Retrieve all users
+  @Get()
+  findAll() {
+    return this.usersService.findAll();
+  }
+
+  // GET /users/:id - Retrieve specific user
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(id);
+  }
+
+  // POST /users - Create new user
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+
+  // PUT /users/:id - Replace entire user
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
+  }
+
+  // PATCH /users/:id - Update specific fields
+  @Patch(':id')
+  patch(@Param('id') id: string, @Body() updates: Partial<UpdateUserDto>) {
+    return this.usersService.patch(id, updates);
+  }
+
+  // DELETE /users/:id - Remove user
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
+  }
+}
 ```
-2xx - Success
-200 OK                  - Successful request
-201 Created             - Resource created
-204 No Content          - Success but no data to return
 
-3xx - Redirection
-301 Moved Permanently
-304 Not Modified
+**PUT vs PATCH**:
+- **PUT**: Send complete object, replaces everything
+- **PATCH**: Send only fields to update, more efficient
 
-4xx - Client Errors
-400 Bad Request         - Invalid syntax
-401 Unauthorized        - Authentication required
-403 Forbidden           - No permission
+---
+
+## HTTP Status Codes
+
+**Why it matters**: Proper status codes help React apps handle responses correctly and NestJS APIs communicate results clearly.
+
+### Most Important Status Codes
+
+```javascript
+// Success (2xx)
+200 OK                  - Request succeeded
+201 Created             - Resource created (POST)
+204 No Content          - Success, no data to return (DELETE)
+
+// Client Errors (4xx)
+400 Bad Request         - Invalid request syntax
+401 Unauthorized        - Authentication required/failed
+403 Forbidden           - Authenticated but no permission
 404 Not Found           - Resource doesn't exist
-409 Conflict            - Request conflicts with current state
-422 Unprocessable Entity - Validation error
+422 Unprocessable Entity - Validation failed
 429 Too Many Requests   - Rate limit exceeded
 
-5xx - Server Errors
-500 Internal Server Error
-502 Bad Gateway
-503 Service Unavailable
-504 Gateway Timeout
+// Server Errors (5xx)
+500 Internal Server Error - Server crashed
+503 Service Unavailable   - Server overloaded/down
 ```
 
-### REST API Best Practices
+### NestJS - Return Correct Status Codes
 
-```javascript
-// 1. Use nouns, not verbs in endpoints
-// Good
-GET    /users
-GET    /users/123
-POST   /users
-PUT    /users/123
-DELETE /users/123
+```typescript
+import { Controller, Post, HttpCode, HttpStatus, NotFoundException } from '@nestjs/common';
 
-// Bad
-GET    /getUsers
-POST   /createUser
+@Controller('users')
+export class UsersController {
+  // Return 201 Created instead of default 200
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body() data: CreateUserDto) {
+    return this.usersService.create(data);
+  }
 
-// 2. Use plural nouns
-GET /users     // Good
-GET /user      // Bad
+  // Return 204 No Content for delete
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
+  }
 
-// 3. Use nested resources for relationships
-GET /users/123/posts
-GET /users/123/posts/456
-
-// 4. Use query parameters for filtering, sorting, pagination
-GET /users?role=admin
-GET /users?sort=name&order=asc
-GET /users?page=2&limit=20
-
-// 5. Version your API
-GET /api/v1/users
-GET /api/v2/users
+  // Throw exceptions for errors
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    const user = await this.usersService.findOne(id);
+    if (!user) {
+      throw new NotFoundException('User not found'); // Returns 404
+    }
+    return user;
+  }
+}
 ```
 
-## Fetch API
+### React - Handle Status Codes
 
-### Basic Usage
 ```javascript
-// GET request
-async function fetchUsers() {
+const fetchUser = async (id) => {
+  const response = await fetch(`/api/users/${id}`);
+
+  // Handle different status codes
+  if (response.status === 404) {
+    throw new Error('User not found');
+  }
+
+  if (response.status === 401) {
+    // Redirect to login
+    window.location.href = '/login';
+    return;
+  }
+
+  if (response.status === 500) {
+    throw new Error('Server error, please try again later');
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+};
+```
+
+---
+
+## Response Properties & Methods
+
+**Why it matters**: React apps need to parse different response types and check request success.
+
+### Response Properties
+
+```javascript
+const response = await fetch('/api/users');
+
+// Properties
+response.ok;          // true if status 200-299
+response.status;      // HTTP status code (200, 404, etc.)
+response.statusText;  // Status message ("OK", "Not Found")
+response.headers;     // Headers object
+response.url;         // Final URL (after redirects)
+```
+
+### Response Methods
+
+```javascript
+const response = await fetch('/api/users');
+
+// Parse response body
+await response.json();      // Parse JSON → JavaScript object
+await response.text();      // Parse as plain text
+await response.blob();      // Parse as binary (images, files)
+await response.formData();  // Parse form data
+
+// Example: Download image
+const response = await fetch('/api/avatar.jpg');
+const blob = await response.blob();
+const imageUrl = URL.createObjectURL(blob);
+```
+
+### React Hook Example
+
+```javascript
+const useFetch = (url) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+};
+
+// Usage in component
+const UsersList = () => {
+  const { data: users, loading, error } = useFetch('/api/users');
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <ul>
+      {users.map(user => <li key={user.id}>{user.name}</li>)}
+    </ul>
+  );
+};
+```
+
+---
+
+## Fetch API - Making HTTP Requests
+
+**Why it matters**: Fetch is the modern way to make HTTP requests in React.
+
+### Complete Examples
+
+```javascript
+// GET with error handling
+const fetchUsers = async () => {
   try {
     const response = await fetch('https://api.example.com/users');
 
@@ -85,22 +303,21 @@ async function fetchUsers() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error('Error:', error);
     throw error;
   }
-}
+};
 
-// POST request
-async function createUser(userData) {
+// POST with headers and body
+const createUser = async (userData) => {
   try {
     const response = await fetch('https://api.example.com/users', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer token123'
+        'Authorization': 'Bearer your-token-here'
       },
       body: JSON.stringify(userData)
     });
@@ -111,58 +328,18 @@ async function createUser(userData) {
 
     return await response.json();
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Error:', error);
     throw error;
   }
-}
+};
 
-// PUT - Full update
-async function updateUser(id, fullUserData) {
+// DELETE request
+const deleteUser = async (id) => {
   try {
-    const response = await fetch(`/api/users/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(fullUserData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating user:', error);
-    throw error;
-  }
-}
-
-// PATCH - Partial update
-async function patchUser(id, updates) {
-  try {
-    const response = await fetch(`/api/users/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error patching user:', error);
-    throw error;
-  }
-}
-
-// DELETE - No body needed, ID is in URL
-async function deleteUser(id) {
-  try {
-    const response = await fetch(`/api/users/${id}`, {
+    const response = await fetch(`https://api.example.com/users/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': 'Bearer token123'
+        'Authorization': 'Bearer your-token-here'
       }
     });
 
@@ -170,164 +347,129 @@ async function deleteUser(id) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    // DELETE often returns 204 No Content, so check before parsing
-    if (response.status !== 204) {
-      return await response.json();
-    }
+    // DELETE often returns 204 No Content
+    if (response.status === 204) return;
+
+    return await response.json();
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error('Error:', error);
     throw error;
   }
-}
+};
 ```
 
-### Response Methods
+### Abort Requests (Cancel Fetch)
+
 ```javascript
-const response = await fetch(url);
+// Cancel fetch when component unmounts
+const SearchComponent = () => {
+  const [results, setResults] = useState([]);
 
-await response.json();        // Parse as JSON
-await response.text();        // Parse as text
-await response.blob();        // Parse as blob (for images, files)
-await response.formData();    // Parse as FormData
+  useEffect(() => {
+    const controller = new AbortController();
 
-// Response properties
-response.ok;                  // true if status 200-299
-response.status;              // HTTP status code
-response.statusText;          // Status message
-response.headers;             // Headers object
+    const search = async () => {
+      try {
+        const response = await fetch('/api/search?q=test', {
+          signal: controller.signal
+        });
+        const data = await response.json();
+        setResults(data);
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          console.log('Fetch cancelled');
+        } else {
+          console.error('Error:', error);
+        }
+      }
+    };
+
+    search();
+
+    // Cancel fetch on unmount
+    return () => controller.abort();
+  }, []);
+
+  return <div>{/* render results */}</div>;
+};
 ```
 
-### Abort Requests
+---
+
+## REST API Best Practices
+
+**Why it matters**: Following conventions makes APIs predictable and easier to use.
+
 ```javascript
-async function fetchWithAbort(url) {
-  const controller = new AbortController();
+// ✅ Good - Use nouns, plural, nested resources
+GET    /api/users               // Get all users
+GET    /api/users/123           // Get specific user
+POST   /api/users               // Create user
+PUT    /api/users/123           // Replace user
+PATCH  /api/users/123           // Update user
+DELETE /api/users/123           // Delete user
 
-  // Abort after 5 seconds
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
+// Nested resources
+GET    /api/users/123/posts     // Get user's posts
+POST   /api/users/123/posts     // Create post for user
 
-  try {
-    const response = await fetch(url, { signal: controller.signal });
+// Query parameters for filtering/sorting/pagination
+GET    /api/users?role=admin
+GET    /api/users?sort=name&order=asc
+GET    /api/users?page=2&limit=20
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+// Versioning
+GET    /api/v1/users
+GET    /api/v2/users
 
-    const data = await response.json();
-    clearTimeout(timeoutId); // Clear timeout if successful
-    return data;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.log('Fetch aborted');
-    } else {
-      console.error('Fetch error:', error);
-    }
-    throw error;
+// ❌ Bad - Don't use verbs
+GET    /api/getUsers
+POST   /api/createUser
+DELETE /api/deleteUser
+```
+
+### NestJS Implementation
+
+```typescript
+@Controller('api/v1/users')
+export class UsersController {
+  // GET /api/v1/users?role=admin&page=1&limit=10
+  @Get()
+  findAll(@Query() query: QueryDto) {
+    const { role, page = 1, limit = 10 } = query;
+    return this.usersService.findAll({ role, page, limit });
+  }
+
+  // GET /api/v1/users/:id/posts
+  @Get(':id/posts')
+  getUserPosts(@Param('id') userId: string) {
+    return this.postsService.findByUserId(userId);
   }
 }
-
-// Usage
-try {
-  const data = await fetchWithAbort('https://api.example.com/users');
-  console.log(data);
-} catch (error) {
-  // Handle abort or other errors
-}
-
-// Manual abort example
-const controller = new AbortController();
-
-setTimeout(() => controller.abort(), 3000); // Abort after 3 seconds
-
-try {
-  const response = await fetch(url, { signal: controller.signal });
-  const data = await response.json();
-  console.log(data);
-} catch (error) {
-  if (error.name === 'AbortError') {
-    console.log('Request was aborted');
-  }
-}
 ```
 
-## Axios (Popular Alternative)
-
-```javascript
-import axios from 'axios';
-
-// GET
-const response = await axios.get('/api/users');
-const users = response.data;
-
-// POST
-await axios.post('/api/users', {
-  name: 'John',
-  email: 'john@example.com'
-});
-
-// PUT/PATCH/DELETE
-await axios.put(`/api/users/${id}`, userData);
-await axios.patch(`/api/users/${id}`, { email: 'new@email.com' });
-await axios.delete(`/api/users/${id}`);
-
-// Interceptors - Add token to all requests
-axios.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  error => Promise.reject(error)
-);
-
-// Handle unauthorized globally
-axios.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response.status === 401) {
-      // Redirect to login
-      window.location = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Create instance with defaults
-const api = axios.create({
-  baseURL: 'https://api.example.com',
-  timeout: 5000,
-  headers: { 'Content-Type': 'application/json' }
-});
-```
-
-## CORS (Cross-Origin Resource Sharing)
-
-### What is CORS?
-Browser security feature that restricts web pages from making requests to a different domain.
-
-```javascript
-// Error: "Access to fetch has been blocked by CORS policy"
-
-// Frontend CANNOT fix CORS - server must allow it
-// Server needs to send headers:
-Access-Control-Allow-Origin: https://yourdomain.com
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE
-Access-Control-Allow-Headers: Content-Type, Authorization
-Access-Control-Allow-Credentials: true
-```
-
-### Preflight Requests
-For complex requests (custom headers, methods other than GET/POST), browser sends OPTIONS request first to check if allowed.
+---
 
 ## Authentication & Authorization
 
-### JWT (JSON Web Token)
-```javascript
-// Token structure: header.payload.signature
+**Why it matters**: Securing APIs is critical. React sends tokens, NestJS validates them.
 
-// Login flow
-async function login(email, password) {
+### JWT Token Flow
+
+```
+1. User logs in → Server returns JWT token
+2. React stores token (localStorage/cookies)
+3. React sends token with every request
+4. NestJS validates token
+5. If valid → Process request
+6. If invalid → Return 401
+```
+
+### React - Login & Send Token
+
+```javascript
+// Login and store token
+const login = async (email, password) => {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -337,10 +479,10 @@ async function login(email, password) {
   const { token } = await response.json();
   localStorage.setItem('token', token);
   return token;
-}
+};
 
 // Use token in requests
-async function fetchProtectedData() {
+const fetchProtectedData = async () => {
   const token = localStorage.getItem('token');
 
   const response = await fetch('/api/protected', {
@@ -350,29 +492,71 @@ async function fetchProtectedData() {
   });
 
   return await response.json();
-}
+};
 
 // Logout
-function logout() {
+const logout = () => {
   localStorage.removeItem('token');
+  window.location.href = '/login';
+};
+```
+
+### NestJS - Validate Token
+
+```typescript
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
+@Injectable()
+export class AuthService {
+  constructor(private jwtService: JwtService) {}
+
+  // Login - Generate token
+  async login(email: string, password: string) {
+    const user = await this.validateUser(email, password);
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const payload = { sub: user.id, email: user.email };
+    return {
+      token: this.jwtService.sign(payload)
+    };
+  }
+}
+
+// Protect routes with Guard
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './jwt-auth.guard';
+
+@Controller('protected')
+export class ProtectedController {
+  @Get()
+  @UseGuards(JwtAuthGuard) // Requires valid token
+  getProtectedData(@Request() req) {
+    // req.user contains decoded token
+    return { userId: req.user.sub };
+  }
 }
 ```
 
-### Refresh Tokens
-```javascript
-async function fetchWithAuth(url, options = {}) {
-  let accessToken = localStorage.getItem('accessToken');
+### Refresh Token Pattern
 
-  // Try with access token
+```javascript
+// React - Auto refresh expired tokens
+const fetchWithAuth = async (url, options = {}) => {
+  let token = localStorage.getItem('accessToken');
+
   let response = await fetch(url, {
     ...options,
     headers: {
       ...options.headers,
-      'Authorization': `Bearer ${accessToken}`
+      'Authorization': `Bearer ${token}`
     }
   });
 
-  // If unauthorized, refresh token
+  // Token expired, refresh it
   if (response.status === 401) {
     const refreshToken = localStorage.getItem('refreshToken');
 
@@ -381,98 +565,87 @@ async function fetchWithAuth(url, options = {}) {
       body: JSON.stringify({ refreshToken })
     });
 
-    const { accessToken: newToken } = await refreshResponse.json();
-    localStorage.setItem('accessToken', newToken);
+    const { accessToken } = await refreshResponse.json();
+    localStorage.setItem('accessToken', accessToken);
 
-    // Retry original request
+    // Retry original request with new token
     response = await fetch(url, {
       ...options,
       headers: {
         ...options.headers,
-        'Authorization': `Bearer ${newToken}`
+        'Authorization': `Bearer ${accessToken}`
       }
     });
   }
 
   return response;
+};
+```
+
+---
+
+## CORS (Cross-Origin Resource Sharing)
+
+**Why it matters**: React dev server (localhost:3000) and NestJS API (localhost:4000) are different origins.
+
+### What is CORS?
+
+Browser security that blocks requests to different domains:
+
+```javascript
+// React on localhost:3000
+fetch('http://localhost:4000/api/users')
+// ❌ Error: "Blocked by CORS policy"
+```
+
+### NestJS - Enable CORS
+
+```typescript
+// main.ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Enable CORS
+  app.enableCors({
+    origin: 'http://localhost:3000', // React app URL
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  });
+
+  await app.listen(4000);
+}
+bootstrap();
+```
+
+### React - Development Proxy (Alternative)
+
+```json
+// package.json
+{
+  "proxy": "http://localhost:4000"
 }
 ```
 
-## WebSockets
-
-### When to Use
-- Real-time applications (chat, notifications)
-- Live updates (stock prices, sports scores)
-- Collaborative editing
-- Gaming
-
-### Basic WebSocket Usage
+Now you can use relative URLs:
 ```javascript
-// Create connection
-const ws = new WebSocket('ws://localhost:8080');
-
-// Connection opened
-ws.onopen = () => {
-  console.log('Connected');
-  ws.send('Hello Server!');
-};
-
-// Receive messages
-ws.onmessage = (event) => {
-  console.log('Message from server:', event.data);
-};
-
-// Handle errors
-ws.onerror = (error) => {
-  console.error('WebSocket error:', error);
-};
-
-// Connection closed
-ws.onclose = () => {
-  console.log('Disconnected');
-};
-
-// Send data
-ws.send(JSON.stringify({ type: 'message', data: 'Hello' }));
-
-// Close connection
-ws.close();
+// Automatically proxied to localhost:4000
+fetch('/api/users')
 ```
 
-### React WebSocket Hook
-```javascript
-function useWebSocket(url) {
-  const [messages, setMessages] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const ws = useRef(null);
+**Key Point**: CORS must be fixed on the backend, not frontend.
 
-  useEffect(() => {
-    ws.current = new WebSocket(url);
-
-    ws.current.onopen = () => setIsConnected(true);
-
-    ws.current.onmessage = (event) => {
-      setMessages(prev => [...prev, JSON.parse(event.data)]);
-    };
-
-    ws.current.onclose = () => setIsConnected(false);
-
-    return () => ws.current.close();
-  }, [url]);
-
-  const sendMessage = (message) => {
-    if (ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify(message));
-    }
-  };
-
-  return { messages, isConnected, sendMessage };
-}
-```
+---
 
 ## Error Handling
 
-### Centralized Error Handler
+**Why it matters**: Apps need to handle network errors, validation errors, and server crashes gracefully.
+
+### Centralized API Client
+
 ```javascript
 class ApiClient {
   constructor(baseURL) {
@@ -491,17 +664,15 @@ class ApiClient {
         }
       });
 
-      // Handle HTTP errors
       if (!response.ok) {
         const error = await response.json();
-        throw new ApiError(error.message, response.status, error);
+        throw new ApiError(error.message, response.status);
       }
 
       return await response.json();
     } catch (error) {
-      // Network errors
       if (error instanceof TypeError) {
-        throw new ApiError('Network error - please check your connection', 0);
+        throw new ApiError('Network error - check connection', 0);
       }
       throw error;
     }
@@ -526,17 +697,14 @@ class ApiClient {
   }
 
   delete(endpoint) {
-    return this.request(endpoint, {
-      method: 'DELETE'
-    });
+    return this.request(endpoint, { method: 'DELETE' });
   }
 }
 
 class ApiError extends Error {
-  constructor(message, status, details) {
+  constructor(message, status) {
     super(message);
     this.status = status;
-    this.details = details;
   }
 }
 
@@ -546,427 +714,255 @@ const api = new ApiClient('https://api.example.com');
 try {
   const users = await api.get('/users');
 } catch (error) {
-  if (error instanceof ApiError) {
-    console.error(`API Error ${error.status}:`, error.message);
+  if (error.status === 404) {
+    console.log('Not found');
+  } else if (error.status === 0) {
+    console.log('Network error');
   }
 }
 ```
 
-## Rate Limiting & Retries
-
-### Exponential Backoff
-```javascript
-async function fetchWithRetry(url, options = {}, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const response = await fetch(url, options);
-
-      if (response.status === 429) {
-        // Rate limited - wait and retry
-        const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      if (i === maxRetries - 1) throw error;
-
-      // Wait before retry
-      const delay = Math.pow(2, i) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-```
-
-## Conversational Interview Q&A
-
-### Q: "What's the difference between PUT and PATCH?"
-
-**Answer**: "Both update resources, but differently:
-
-**PUT** - Full replacement:
-```javascript
-// PUT replaces entire resource
-PUT /api/users/123
-{
-  "name": "John",
-  "email": "john@example.com",
-  "age": 30
-}
-// Must send ALL fields, missing fields become null/undefined
-```
-
-**PATCH** - Partial update:
-```javascript
-// PATCH updates only specified fields
-PATCH /api/users/123
-{
-  "email": "newemail@example.com"
-}
-// Only updates email, other fields unchanged
-```
-
-**When to use:**
-- **PUT**: When you have the complete resource and want to replace it
-- **PATCH**: When you only want to update specific fields
-
-**Best practice**: Use PATCH for most updates in modern APIs - it's more efficient and prevents accidental data loss."
-
-### Q: "Explain the difference between Authentication and Authorization"
-
-**Answer**: "They serve different purposes in security:
-
-**Authentication** - *Who are you?*
-- Verifies user identity
-- Login with username/password
-- Proves you are who you claim to be
-- Example: JWT token after login
-
-**Authorization** - *What can you do?*
-- Determines permissions
-- Checks if authenticated user has access
-- Controls what actions user can perform
-- Example: Admin vs regular user roles
-
-**Real-world example:**
-```javascript
-// Authentication - Verify identity
-app.post('/login', async (req, res) => {
-  const user = await verifyCredentials(req.body.email, req.body.password);
-  const token = generateJWT(user);
-  res.json({ token });
-});
-
-// Authorization - Check permissions
-app.delete('/users/:id', authenticate, authorize('admin'), async (req, res) => {
-  // Only admins can delete users
-  await deleteUser(req.params.id);
-});
-```
-
-**Think of it like:**
-- Authentication = Security check at building entrance (ID verification)
-- Authorization = Key card access to specific floors (permission levels)"
-
-### Q: "How would you handle rate limiting in a frontend application?"
-
-**Answer**: "Rate limiting protects APIs from abuse. Here's how to handle it:
-
-**1. Detect rate limiting:**
-```javascript
-if (response.status === 429) {
-  // Too Many Requests
-  const retryAfter = response.headers.get('Retry-After');
-}
-```
-
-**2. Implement exponential backoff:**
-```javascript
-async function fetchWithBackoff(url, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    const response = await fetch(url);
-
-    if (response.status === 429) {
-      const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
-      await new Promise(resolve => setTimeout(resolve, delay));
-      continue;
-    }
-
-    return response;
-  }
-  throw new Error('Max retries reached');
-}
-```
-
-**3. Client-side throttling:**
-```javascript
-// Limit requests to 10 per second
-const throttle = (fn, delay) => {
-  let lastCall = 0;
-  return async (...args) => {
-    const now = Date.now();
-    if (now - lastCall < delay) {
-      await new Promise(r => setTimeout(r, delay - (now - lastCall)));
-    }
-    lastCall = Date.now();
-    return fn(...args);
-  };
-};
-
-const throttledFetch = throttle(fetch, 100);
-```
-
-**4. Show user feedback:**
-```javascript
-if (response.status === 429) {
-  showNotification('Too many requests. Please wait a moment.');
-}
-```
-
-**Best practices:**
-- Respect Retry-After headers
-- Use exponential backoff
-- Cache responses when possible
-- Batch requests when appropriate
-- Show clear user feedback"
-
-### Q: "Explain CORS and when you encounter it"
-
-**Answer**: "CORS (Cross-Origin Resource Sharing) is a browser security feature:
-
-**What it does:**
-Prevents a webpage from making requests to a different domain than the one that served the page.
-
-**When you encounter it:**
-```javascript
-// Frontend on localhost:3000
-fetch('https://api.example.com/users')
-// Error: "Blocked by CORS policy"
-```
-
-**Why it exists:**
-Security - prevents malicious sites from reading your data from other sites.
-
-**How to fix it:**
-
-**Backend must add headers:**
-```javascript
-// Express example
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://yourdomain.com');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
-```
-
-**Frontend CANNOT fix CORS** - it's a server-side configuration.
-
-**Development workarounds:**
-1. Proxy in package.json (React):
-```json
-"proxy": "https://api.example.com"
-```
-
-2. Browser extension (NOT for production)
-3. CORS proxy service (NOT for production)
-
-**Preflight requests:**
-For complex requests, browser sends OPTIONS first:
-```
-OPTIONS /api/users
-Access-Control-Request-Method: POST
-Access-Control-Request-Headers: Content-Type
-
-Server responds:
-Access-Control-Allow-Origin: *
-Access-Control-Allow-Methods: POST
-```
-
-**Key point:** CORS is browser-enforced. Postman/curl work fine because they don't enforce CORS."
-
-### Q: "When would you use WebSockets vs HTTP polling?"
-
-**Answer**: "Choose based on your use case:
-
-**WebSockets** - Full-duplex communication:
-
-**Use when:**
-- Real-time bidirectional communication needed
-- Frequent updates (chat, live collaboration)
-- Low latency required
-- Server needs to push data instantly
-
-**Example:**
-```javascript
-const ws = new WebSocket('ws://localhost:8080');
-
-ws.onmessage = (event) => {
-  // Instant updates from server
-  updateUI(event.data);
-};
-```
-
-**Pros:**
-- True real-time
-- Low latency
-- Efficient (persistent connection)
-- Server can push anytime
-
-**Cons:**
-- More complex
-- Harder to scale
-- Stateful connections
-- Firewall issues
-
-**HTTP Polling** - Periodic requests:
-
-**Use when:**
-- Updates not time-critical
-- Simple to implement
-- Updates infrequent (every few minutes)
-- RESTful architecture preferred
-
-**Example:**
-```javascript
-// Poll every 5 seconds
-setInterval(async () => {
-  const data = await fetch('/api/status');
-  updateUI(data);
-}, 5000);
-```
-
-**Pros:**
-- Simple
-- Works everywhere
-- Stateless
-- Easy to debug
-
-**Cons:**
-- Delayed updates
-- Wasteful (empty responses)
-- Higher latency
-- Server load
-
-**Comparison:**
-
-| Feature | WebSocket | Polling |
-|---------|-----------|---------|
-| **Latency** | Very low | Higher |
-| **Efficiency** | High | Low |
-| **Complexity** | Higher | Lower |
-| **Real-time** | Yes | No |
-| **Scaling** | Harder | Easier |
-
-**Long Polling** (middle ground):
-```javascript
-async function longPoll() {
-  while (true) {
-    const response = await fetch('/api/updates');
-    const data = await response.json();
-    updateUI(data);
-    // Immediately start next request
-  }
-}
-```
-
-**My recommendation:**
-- **Chat, gaming, live collaboration** → WebSockets
-- **Dashboard updates every 30s** → Regular polling
-- **Notifications** → Long polling or WebSockets
-- **Stock prices** → WebSockets"
-
-### Q: "How do you handle token expiration and refresh tokens?"
-
-**Answer**: "Token refresh prevents users from being logged out constantly:
-
-**Flow:**
-1. User logs in → Gets access token (short-lived, 15min) + refresh token (long-lived, 7 days)
-2. Use access token for API requests
-3. When access token expires → Use refresh token to get new access token
-4. When refresh token expires → User must log in again
-
-**Implementation:**
-```javascript
-class AuthService {
-  async refreshAccessToken() {
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken })
+### NestJS - Global Exception Filter
+
+```typescript
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common';
+
+@Catch()
+export class GlobalExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
+
+    const status = exception instanceof HttpException
+      ? exception.getStatus()
+      : 500;
+
+    const message = exception instanceof HttpException
+      ? exception.message
+      : 'Internal server error';
+
+    response.status(status).json({
+      statusCode: status,
+      message,
+      timestamp: new Date().toISOString()
     });
-
-    const { accessToken } = await response.json();
-    localStorage.setItem('accessToken', accessToken);
-    return accessToken;
-  }
-
-  async fetchWithAuth(url, options = {}) {
-    let accessToken = localStorage.getItem('accessToken');
-
-    let response = await fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
-
-    // Token expired
-    if (response.status === 401) {
-      try {
-        // Get new access token
-        accessToken = await this.refreshAccessToken();
-
-        // Retry request with new token
-        response = await fetch(url, {
-          ...options,
-          headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${accessToken}`
-          }
-        });
-      } catch (error) {
-        // Refresh failed - redirect to login
-        window.location = '/login';
-        throw error;
-      }
-    }
-
-    return response;
   }
 }
+
+// Apply globally in main.ts
+app.useGlobalFilters(new GlobalExceptionFilter());
 ```
 
-**Axios interceptor approach:**
+---
+
+## Axios (Popular Alternative to Fetch)
+
+**Why it matters**: Axios has simpler syntax and built-in features like interceptors.
+
+### Basic Usage
+
 ```javascript
+import axios from 'axios';
+
+// GET
+const users = await axios.get('/api/users');
+console.log(users.data); // Auto-parsed JSON
+
+// POST
+await axios.post('/api/users', {
+  name: 'John',
+  email: 'john@example.com'
+});
+
+// PUT/PATCH/DELETE
+await axios.put(`/api/users/${id}`, userData);
+await axios.patch(`/api/users/${id}`, { email: 'new@email.com' });
+await axios.delete(`/api/users/${id}`);
+```
+
+### Axios Instance with Defaults
+
+```javascript
+// Create configured instance
+const api = axios.create({
+  baseURL: 'https://api.example.com',
+  timeout: 5000,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+// Use instance
+const users = await api.get('/users');
+await api.post('/users', userData);
+```
+
+### Interceptors (Add Token to All Requests)
+
+```javascript
+// Request interceptor - Add token
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor - Handle 401 globally
 axios.interceptors.response.use(
-  response => response,
-  async error => {
-    const originalRequest = error.config;
-
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const { accessToken } = await refreshAccessToken();
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return axios(originalRequest);
-      } catch (refreshError) {
-        window.location = '/login';
-        return Promise.reject(refreshError);
-      }
+  (response) => response,
+  (error) => {
+    if (error.response.status === 401) {
+      // Redirect to login
+      window.location.href = '/login';
     }
-
     return Promise.reject(error);
   }
 );
 ```
 
-**Security best practices:**
-- Store refresh token in httpOnly cookie (more secure than localStorage)
-- Access token: short-lived (15 min)
-- Refresh token: longer (7 days)
-- Rotate refresh tokens on each use
-- Invalidate all tokens on logout"
+**Fetch vs Axios**:
+- **Fetch**: Built-in, no install needed, more verbose
+- **Axios**: Third-party, simpler syntax, more features
 
-## Best Practices
+---
 
-1. **Use proper HTTP methods** - GET for reading, POST for creating, PUT/PATCH for updating
-2. **Handle errors gracefully** - Show user-friendly messages
-3. **Implement retries** - With exponential backoff for transient failures
-4. **Cache when appropriate** - Reduce unnecessary requests
-5. **Use interceptors** - For auth tokens and global error handling
-6. **Secure tokens** - httpOnly cookies > localStorage
-7. **Validate responses** - Check status codes and data shape
-8. **Use TypeScript** - Type API responses for safety
-9. **Centralize API calls** - Single source of truth
-10. **Monitor and log** - Track API errors and performance
+## Interview Questions
+
+### Q1: What's the difference between PUT and PATCH?
+
+**Answer**:
+- **PUT**: Replaces entire resource. Must send all fields, missing fields become null.
+- **PATCH**: Updates only specified fields. More efficient.
+
+```javascript
+// PUT - Must send complete object
+await fetch('/api/users/123', {
+  method: 'PUT',
+  body: JSON.stringify({
+    name: 'John',
+    email: 'john@example.com',
+    age: 30
+  })
+});
+
+// PATCH - Only send what changed
+await fetch('/api/users/123', {
+  method: 'PATCH',
+  body: JSON.stringify({
+    email: 'newemail@example.com'
+  })
+});
+```
+
+**Use PATCH** for most updates to avoid accidental data loss.
+
+---
+
+### Q2: Explain Authentication vs Authorization
+
+**Answer**:
+- **Authentication**: *Who are you?* Verifies identity (login)
+- **Authorization**: *What can you do?* Checks permissions (roles)
+
+```javascript
+// Authentication - Verify identity
+POST /api/auth/login { email, password }
+→ Returns JWT token
+
+// Authorization - Check permissions
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
+@Delete('/users/:id')
+// Only admins can delete users
+```
+
+---
+
+### Q3: How does CORS work and when do you encounter it?
+
+**Answer**:
+CORS is browser security that prevents requests to different domains.
+
+```javascript
+// React on localhost:3000
+fetch('http://localhost:4000/api/users')
+// ❌ CORS error
+```
+
+**Solution**: Backend must allow the origin:
+```typescript
+// NestJS
+app.enableCors({
+  origin: 'http://localhost:3000'
+});
+```
+
+**Frontend cannot fix CORS** - it's a server configuration.
+
+---
+
+### Q4: What status code should DELETE return?
+
+**Answer**:
+- **204 No Content**: Most common, indicates success with no response body
+- **200 OK**: Can return deleted resource
+- **404 Not Found**: If resource doesn't exist
+
+```typescript
+// NestJS
+@Delete(':id')
+@HttpCode(HttpStatus.NO_CONTENT)
+remove(@Param('id') id: string) {
+  return this.usersService.remove(id);
+}
+```
+
+---
+
+### Q5: How do you handle token expiration?
+
+**Answer**:
+Use **access token** (short-lived) + **refresh token** (long-lived):
+
+1. Access token expires → Get 401
+2. Use refresh token to get new access token
+3. Retry original request
+4. If refresh fails → Redirect to login
+
+```javascript
+const fetchWithAuth = async (url, options = {}) => {
+  let token = localStorage.getItem('accessToken');
+  let response = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  if (response.status === 401) {
+    // Refresh token
+    const newToken = await refreshAccessToken();
+    // Retry with new token
+    response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${newToken}` }
+    });
+  }
+
+  return response;
+};
+```
+
+---
+
+## Best Practices Summary
+
+1. **Use proper HTTP methods**: GET (read), POST (create), PUT/PATCH (update), DELETE (remove)
+2. **Return correct status codes**: 200 (ok), 201 (created), 204 (no content), 404 (not found)
+3. **Handle errors gracefully**: Try-catch, show user-friendly messages
+4. **Secure authentication**: Use JWT tokens, httpOnly cookies, refresh tokens
+5. **Enable CORS**: Configure in NestJS for cross-origin requests
+6. **Use interceptors**: Add tokens to all requests automatically (Axios)
+7. **Validate responses**: Check `response.ok` and status codes
+8. **Centralize API calls**: Create ApiClient class
+9. **Cancel requests**: Use AbortController when component unmounts
+10. **Follow REST conventions**: Plural nouns, nested resources, query params

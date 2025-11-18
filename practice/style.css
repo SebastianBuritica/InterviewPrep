@@ -1,0 +1,293 @@
+/* ============================================
+   RESET Y ESTILOS BÁSICOS
+   ============================================ */
+
+/* Selector universal (*) - Specificity: 0,0,0,0 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Selector de elemento (body) - Specificity: 0,0,0,1 */
+body {
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+  background-color: #f0f0f0;
+}
+
+/* Selector de clase (.container) - Specificity: 0,0,1,0 */
+.container {
+  background: white;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Selector de elemento (h1) - Specificity: 0,0,0,1 */
+h1 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+/* Selector de clase (.description) - Specificity: 0,0,1,0 */
+.description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+
+/* ============================================
+   FLEXBOX DEMO
+   ============================================ */
+
+/* Selector de clase (.flex-container) - Specificity: 0,0,1,0 */
+.flex-container {
+  /* Activa flexbox */
+  display: flex;
+
+  /* Dirección: row (horizontal) | column (vertical) */
+  flex-direction: row;
+
+  /* Alineación en eje principal (horizontal si row) */
+  justify-content: space-around; /* space-around | space-between | center | flex-start | flex-end */
+
+  /* Alineación en eje secundario (vertical si row) */
+  align-items: center; /* center | flex-start | flex-end | stretch */
+
+  /* Permite que los items se envuelvan en múltiples líneas */
+  flex-wrap: wrap;
+
+  gap: 1rem; /* Espacio entre items */
+  background-color: #e8f4f8;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+/* Selector de clase (.box) - Specificity: 0,0,1,0 */
+.box {
+  background-color: #4a90e2;
+  color: white;
+  padding: 2rem;
+  border-radius: 4px;
+  font-weight: bold;
+  text-align: center;
+  min-width: 100px;
+}
+
+/* Selector de múltiples clases (.box.special) - Specificity: 0,0,2,0
+   GANA sobre .box porque tiene mayor specificity */
+.box.special {
+  background-color: #e74c3c;
+  /* flex-grow: permite que crezca más que los demás */
+  flex-grow: 1;
+}
+
+
+/* ============================================
+   GRID DEMO
+   ============================================ */
+
+/* Selector de clase (.grid-container) - Specificity: 0,0,1,0 */
+.grid-container {
+  /* Activa CSS Grid */
+  display: grid;
+
+  /* Define 3 columnas: 200px, el resto (1fr), 200px */
+  grid-template-columns: 200px 1fr 200px;
+
+  /* Define 3 filas: auto-height para header y footer, 300px para contenido */
+  grid-template-rows: auto 300px auto;
+
+  /* Espacio entre celdas */
+  gap: 1rem;
+
+  /* Define áreas nombradas para posicionar elementos */
+  grid-template-areas:
+    "header header header"
+    "sidebar content content"
+    "footer footer footer";
+
+  background-color: #fff3cd;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+/* Selector de clase (.grid-item) - Specificity: 0,0,1,0 */
+.grid-item {
+  background-color: #6c757d;
+  color: white;
+  padding: 1.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Selector de múltiples clases (.grid-item.header) - Specificity: 0,0,2,0 */
+.grid-item.header {
+  background-color: #28a745;
+  grid-area: header; /* Usa el área nombrada "header" */
+}
+
+.grid-item.sidebar {
+  background-color: #17a2b8;
+  grid-area: sidebar;
+}
+
+.grid-item.content {
+  background-color: #007bff;
+  grid-area: content;
+}
+
+.grid-item.footer {
+  background-color: #6610f2;
+  grid-area: footer;
+}
+
+
+/* ============================================
+   SELECTORES Y SPECIFICITY DEMO
+   ============================================ */
+
+/* Selector de elemento (p) - Specificity: 0,0,0,1
+   Color base para todos los párrafos */
+p {
+  color: #333;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background-color: #f8f9fa;
+  border-left: 3px solid #dee2e6;
+}
+
+/* Selector de ID (#unique-paragraph) - Specificity: 0,1,0,0
+   GANA sobre cualquier clase o elemento */
+#unique-paragraph {
+  color: #e74c3c;
+  background-color: #ffe6e6;
+  border-left-color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Selector de clase (.highlight) - Specificity: 0,0,1,0
+   GANA sobre selector de elemento (p) */
+.highlight {
+  color: #f39c12;
+  background-color: #fff3cd;
+  border-left-color: #f39c12;
+}
+
+/* Selector de múltiples clases (.highlight.important) - Specificity: 0,0,2,0
+   GANA sobre .highlight (0,0,1,0) */
+.highlight.important {
+  color: #c0392b;
+  background-color: #f8d7da;
+  border-left-color: #c0392b;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* Selector descendiente (.parent p) - Specificity: 0,0,1,1
+   Selecciona TODOS los <p> dentro de .parent (sin importar cuán anidados) */
+.parent p {
+  color: #8e44ad;
+  background-color: #f4ecf7;
+  border-left-color: #8e44ad;
+}
+
+/* Selector de hijo directo (.direct-parent > p) - Specificity: 0,0,1,1
+   Selecciona SOLO los <p> que son hijos DIRECTOS de .direct-parent */
+.direct-parent > p {
+  color: #16a085;
+  background-color: #d5f4e6;
+  border-left-color: #16a085;
+  font-weight: bold;
+}
+
+/* Selector de hermano adyacente (h2 + p) - Specificity: 0,0,0,2
+   Selecciona el <p> que está INMEDIATAMENTE después de un <h2> */
+h2 + p {
+  color: #2980b9;
+  background-color: #d6eaf8;
+  border-left-color: #2980b9;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* Selector de elemento (h2) - Specificity: 0,0,0,1 */
+h2 {
+  color: #2c3e50;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
+/* Selector de clase (.after-title) - Specificity: 0,0,1,0 */
+.after-title {
+  /* Este estilo existe pero el selector h2 + p (0,0,0,2)
+     NO gana sobre .after-title (0,0,1,0)
+     porque .after-title tiene mayor specificity */
+  border-left-width: 5px;
+}
+
+
+/* ============================================
+   TABLA DE SPECIFICITY
+   ============================================ */
+
+/*
+ORDEN DE SPECIFICITY (de mayor a menor):
+
+1. Inline style          → style="..."           → 1,0,0,0
+2. ID                    → #unique-paragraph     → 0,1,0,0
+3. Clase/Atributo/Pseudo → .highlight            → 0,0,1,0
+4. Elemento/Pseudo       → p, h1, div            → 0,0,0,1
+5. Universal             → *                     → 0,0,0,0
+
+EJEMPLOS:
+- style="color: red"        → 1,0,0,0 (INLINE STYLE - GANA SIEMPRE)
+- #unique-paragraph         → 0,1,0,0
+- .highlight.important      → 0,0,2,0 (dos clases)
+- .parent p                 → 0,0,1,1 (una clase + un elemento)
+- h2 + p                    → 0,0,0,2 (dos elementos)
+- p                         → 0,0,0,1
+- *                         → 0,0,0,0
+
+REGLAS:
+1. Mayor specificity GANA
+2. Si hay empate, el ÚLTIMO definido en el CSS GANA
+3. !important OVERRIDE todo (pero evítalo)
+*/
+
+
+/* ============================================
+   DIFERENCIAS CLAVE
+   ============================================ */
+
+/*
+FLEXBOX vs GRID:
+
+FLEXBOX:
+- Una dimensión (fila O columna)
+- Perfecto para: navbars, listas, alinear items
+- Items se adaptan automáticamente
+- justify-content, align-items, flex-direction
+
+GRID:
+- Dos dimensiones (filas Y columnas)
+- Perfecto para: layouts completos, dashboards
+- Control preciso de posicionamiento
+- grid-template-columns, grid-template-rows, grid-areas
+
+
+SELECTORES:
+
+.parent p         → Descendiente (TODOS los p dentro, sin importar profundidad)
+.parent > p       → Hijo directo (SOLO p hijos directos)
+h2 + p            → Hermano adyacente (el p INMEDIATAMENTE después de h2)
+h2 ~ p            → Hermano general (TODOS los p después de h2, mismo nivel)
+*/

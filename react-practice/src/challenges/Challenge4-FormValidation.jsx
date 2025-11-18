@@ -22,27 +22,81 @@ import { useState } from 'react';
  */
 
 const Challenge4 = () => {
-  const [formData, setFormData] = useState({
-    name: '',
+  const [form, setForm] = useState({
     email: '',
-    password: '',
-  });
-
-  const [errors, setErrors] = useState({});
+    password: ''
+  })
+  const [error, setError] = useState('')
 
   // TODO: Implement handleChange
+  const handleEmailChange = (e) => {
+    setForm({...form, email: e.target.value})
+  }
 
-  // TODO: Implement validation logic
+  const handlePasswordChange = (e) => {
+    setForm({...form, password: e.target.value})
+  }
 
-  // TODO: Implement handleSubmit
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setError('')
+
+    // Validate email
+    if (!form.email.trim()) {
+      setError('Email is required')
+      return
+    }
+    if (!form.email.includes('@')) {
+      setError('Invalid email')
+      return
+    }
+
+    // Validate password
+    if (!form.password) {
+      setError('Password is required')
+      return
+    }
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+
+    // Success
+    console.log('Form submitted:', form)
+    setForm({ email: '', password: '' }) // Reset form
+  }
+
+
 
   return (
     <div style={{ padding: '20px', maxWidth: '400px' }}>
       <h2>Challenge 4: Form Validation</h2>
-      <form>
-        {/* TODO: Add form inputs with error display */}
-        {/* TODO: Add submit button */}
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <div>{error}</div>
+        )}
+
+        <div>
+          <input
+          type='email'
+          value={form.email}
+          onChange={handleEmailChange}
+          placeholder='Email'
+          />
+        </div>
+
+        <div>
+          <input
+          type='password'
+          value={form.password}
+          onChange={handlePasswordChange}
+          placeholder='Password'
+          />
+        </div>
+
+        <button type='submit'>Submit</button>
       </form>
+
     </div>
   );
 };

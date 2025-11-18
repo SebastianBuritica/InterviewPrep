@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Practice - Flexbox, Grid & Selectors</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- SECCIÓN 1: FLEXBOX -->
+  <section id="flexbox-section" class="container">
+    <h1>Flexbox Demo</h1>
+    <p class="description">Flexbox organiza elementos en una dimensión (fila o columna)</p>
+
+    <div class="flex-container">
+      <div class="box">Box 1</div>
+      <div class="box special">Box 2 (special)</div>
+      <div class="box">Box 3</div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 2: GRID -->
+  <section id="grid-section" class="container">
+    <h1>Grid Demo</h1>
+    <p class="description">Grid organiza elementos en dos dimensiones (filas y columnas)</p>
+
+    <div class="grid-container">
+      <div class="grid-item header">Header</div>
+      <div class="grid-item sidebar">Sidebar</div>
+      <div class="grid-item content">Content</div>
+      <div class="grid-item footer">Footer</div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 3: SELECTORES -->
+  <section id="selectors-section" class="container">
+    <h1>Selectores Demo</h1>
+
+    <div class="selectors-demo">
+      <!-- Elemento con ID (alta specificity) -->
+      <p id="unique-paragraph">Párrafo con ID (#unique-paragraph)</p>
+
+      <!-- Elementos con clases -->
+      <p class="highlight">Párrafo con clase (.highlight)</p>
+      <p class="highlight important">Párrafo con dos clases (.highlight.important)</p>
+
+      <!-- Selector de elemento -->
+      <p>Párrafo sin clase (selector de elemento p)</p>
+
+      <!-- Selector descendiente -->
+      <div class="parent">
+        <p>Párrafo dentro de .parent (descendiente)</p>
+        <div>
+          <p>Párrafo anidado más profundo</p>
+        </div>
+      </div>
+
+      <!-- Selector de hijo directo -->
+      <div class="direct-parent">
+        <p>Hijo directo de .direct-parent</p>
+        <div>
+          <p>NO es hijo directo (está dentro de div)</p>
+        </div>
+      </div>
+
+      <!-- Selector de hermano adyacente -->
+      <h2>Título</h2>
+      <p class="after-title">Párrafo inmediatamente después del h2</p>
+      <p>Otro párrafo</p>
+
+      <!-- Inline style (máxima specificity) -->
+      <p style="color: purple; font-weight: bold;">Párrafo con inline style (máxima specificity)</p>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

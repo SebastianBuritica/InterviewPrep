@@ -1,496 +1,440 @@
-# CSS - Modern Interview Guide
+# CSS Interview Guide - Questions & Answers
 
-## Box Model & Box-Sizing
+CSS interview preparation with concise paragraph-style answers and code examples.
 
-**Theory**: Every element is a box with content, padding, border, and margin.
+---
+
+## 1. What is the CSS Box Model and why is box-sizing important?
+
+The CSS Box Model describes how elements are structured with four layers from inside out: content, padding, border, and margin. The box-sizing property controls how width/height are calculated. By default (content-box), width only applies to content, so padding and border ADD to the total size. With border-box, width INCLUDES padding and border, making elements behave predictably.
+
+**Visual example:**
+
+```
+┌─────────────────────────────┐
+│        MARGIN (outside)      │  ← Always outside, doesn't affect size
+│  ┌───────────────────────┐  │
+│  │    BORDER             │  │
+│  │  ┌─────────────────┐ │  │
+│  │  │   PADDING       │ │  │
+│  │  │  ┌───────────┐  │ │  │
+│  │  │  │  CONTENT  │  │ │  │  ← This is what you put inside
+│  │  │  └───────────┘  │ │  │
+│  │  └─────────────────┘ │  │
+│  └───────────────────────┘  │
+└─────────────────────────────┘
+```
 
 ```css
-/* Default - width only affects content */
-box-sizing: content-box;
+/* Problem with content-box (default) */
+.box {
+  width: 300px;           /* Only content width */
+  padding: 20px;          /* Adds 40px total (left + right) */
+  border: 5px solid;      /* Adds 10px total (left + right) */
+  /* Total width = 300 + 40 + 10 = 350px! Not what you expected! */
+}
 
-/* Modern - width includes padding & border */
-box-sizing: border-box; /* ✅ Use this always */
+/* Solution with border-box */
+.box {
+  box-sizing: border-box; /* Include padding and border in width */
+  width: 300px;           /* Total width including padding and border */
+  padding: 20px;
+  border: 5px solid;
+  /* Total width = 300px exactly! Padding and border fit inside */
+}
 
-/* Global reset (best practice) */
+/* Best practice: Apply to all elements */
 * {
   box-sizing: border-box;
 }
 ```
 
-**Why border-box**: Makes sizing predictable. A 300px div stays 300px even with padding/border.
-
----
-
-## Flexbox vs Grid - When to Use Each
-
-### Flexbox
-**Theory**: One-dimensional layout (row OR column). Content-first approach.
-
-**Best for**:
-- Navigation bars
-- Card layouts
-- Centering items
-- Distributing space between items
-- When content size determines layout
+**Real example:**
 
 ```css
-.container {
-  display: flex;
-  justify-content: space-between; /* Main axis (horizontal) */
-  align-items: center;           /* Cross axis (vertical) */
-  gap: 1rem;
+/* Without border-box - breaks layout! */
+.card {
+  width: 100%;     /* Should fill container */
+  padding: 20px;   /* But now it's 100% + 40px = overflows! */
 }
 
-.item {
-  flex: 1; /* Grow equally */
+/* With border-box - works perfectly */
+.card {
+  box-sizing: border-box;
+  width: 100%;     /* Fills container exactly */
+  padding: 20px;   /* Padding fits inside the 100% */
 }
 ```
 
-**Common Patterns**:
-```css
-/* Perfect centering */
-.center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+**Simple rule**: Always use `box-sizing: border-box` - it makes width mean "total width" instead of "content width only".
 
-/* Space between items */
-.nav {
-  display: flex;
-  gap: 1rem; /* Modern, cleaner than margins */
-}
+---
+
+## 2. When should you use Flexbox versus CSS Grid?
+
+Flexbox is one-dimensional for arranging items in a row or column. Use it for navigation bars, centering content, and distributing space. Grid is two-dimensional for layouts with rows and columns. Use it for page layouts, galleries, and dashboards. In practice, use Grid for overall structure and Flexbox for components.
+
+```css
+.nav { display: flex; justify-content: space-between; }
+.layout { display: grid; grid-template-columns: 200px 1fr 200px; }
 ```
 
 ---
 
-### Grid
-**Theory**: Two-dimensional layout (rows AND columns). Layout-first approach.
+## 3. Explain CSS positioning values.
 
-**Best for**:
-- Page layouts
-- Complex components with rows and columns
-- Responsive galleries
-- When layout structure matters more than content
+Static is default with normal flow. Relative positions offset from normal position, keeping original space. Absolute removes from flow and positions relative to nearest positioned ancestor. Fixed positions relative to viewport and stays on scroll. Sticky acts relative until a scroll threshold, then becomes fixed. Use sticky for headers that should stick after scrolling.
+
+---
+
+## 4. How does the CSS Cascade work?
+
+The cascade is the "C" in CSS - it decides which style wins when multiple rules target the same element. Think of it like a waterfall flowing down, with three levels that determine the winner in this order: 1) Importance, 2) Specificity, 3) Source Order. Each level only matters if the previous level is tied.
+
+**The 3 Cascade Levels (in order):**
+
+**Level 1: Importance** - !important always wins (but avoid using it!)
+```css
+p { color: red !important; }  /* Wins over everything */
+p { color: blue; }
+/* Result: red (because !important) */
+```
+
+**Level 2: Specificity** - More specific selectors win (see next question for calculation)
+```css
+p { color: red; }              /* Specificity: 0,0,0,1 */
+.text { color: blue; }         /* Specificity: 0,0,1,0 - WINS */
+/* Result: blue (class is more specific than element) */
+```
+
+**Level 3: Source Order** - If importance AND specificity are equal, the last rule wins
+```css
+p { color: red; }
+p { color: blue; }   /* Same specificity, comes later - WINS */
+/* Result: blue (written last) */
+```
+
+**Real-world example:**
+```html
+<p class="intro" id="first">Hello</p>
+```
 
 ```css
-.container {
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr; /* 3 columns */
-  gap: 1rem;
-}
+/* Which color wins? */
+p { color: red; }           /* Specificity: 0,0,0,1 */
+.intro { color: blue; }     /* Specificity: 0,0,1,0 */
+#first { color: green; }    /* Specificity: 0,1,0,0 - WINS! */
 
-/* Responsive grid - auto columns */
-.gallery {
+/* Result: green
+   Why: ID has highest specificity
+   Order doesn't matter when specificity is different */
+```
+
+**Inheritance** - Some properties (like color, font) pass from parent to children:
+```css
+body { color: gray; }
+/* All text inside body inherits gray color unless overridden */
+```
+
+**Simple memory trick**: Cascade = Importance > Specificity > Order. Think "ISO" (like the camera setting).
+
+---
+
+## 5. What is CSS Specificity and how do you calculate it?
+
+Specificity is like a scoring system that determines which CSS rule wins. Think of it as four columns of numbers (A, B, C, D) from left to right. Higher numbers in earlier columns always win, like comparing 0,1,0,0 vs 0,0,99,99 - the first wins because column B is higher.
+
+**The 4 Columns (A, B, C, D):**
+
+```
+    A    B    C    D
+┌────┬────┬────┬────┐
+│ ?  │ ?  │ ?  │ ?  │
+└────┴────┴────┴────┘
+  │    │    │    │
+  │    │    │    └─── D: Elements (div, p, h1)
+  │    │    └──────── C: Classes (.button), Attributes ([type]), Pseudo-classes (:hover)
+  │    └───────────── B: IDs (#header)
+  └────────────────── A: Inline styles (style="...")
+```
+
+**How to calculate:**
+
+1. Count **inline styles** → Column A
+2. Count **IDs** → Column B
+3. Count **classes, attributes, pseudo-classes** → Column C
+4. Count **elements** → Column D
+
+**Examples with step-by-step:**
+
+```css
+/* Example 1: p */
+p { }
+/* A=0, B=0, C=0, D=1 (one element)
+   Score: 0,0,0,1 */
+
+/* Example 2: .button */
+.button { }
+/* A=0, B=0, C=1 (one class), D=0
+   Score: 0,0,1,0 */
+
+/* Example 3: #header */
+#header { }
+/* A=0, B=1 (one ID), C=0, D=0
+   Score: 0,1,0,0 */
+
+/* Example 4: div.button */
+div.button { }
+/* A=0, B=0, C=1 (one class), D=1 (one element)
+   Score: 0,0,1,1 */
+
+/* Example 5: #nav .button:hover */
+#nav .button:hover { }
+/* A=0, B=1 (one ID), C=2 (one class + one pseudo-class), D=0
+   Score: 0,1,2,0 */
+
+/* Example 6: ul li a.link */
+ul li a.link { }
+/* A=0, B=0, C=1 (one class), D=3 (three elements: ul, li, a)
+   Score: 0,0,1,3 */
+```
+
+**Which one wins? Compare left to right:**
+
+```html
+<p class="text" id="intro">Hello</p>
+```
+
+```css
+p { color: red; }              /* 0,0,0,1 */
+.text { color: blue; }         /* 0,0,1,0 - Column C higher */
+#intro { color: green; }       /* 0,1,0,0 - Column B higher - WINS! */
+p.text { color: yellow; }      /* 0,0,1,1 - Column B is 0, loses */
+
+/* Result: green
+   Why: ID (0,1,0,0) has higher B column than all others */
+```
+
+**Important rules:**
+- **One ID beats ANY number of classes**: `0,1,0,0` > `0,0,99,99`
+- **One class beats ANY number of elements**: `0,0,1,0` > `0,0,0,99`
+- **Inline styles beat everything**: `<p style="color: red">` has `1,0,0,0`
+- **!important breaks the system** (avoid it)
+
+**Simple memory trick**: Think of it like money - $1,000 (ID) is worth more than $999 (999 classes).
+
+---
+
+## 6. What's the difference between display none, visibility hidden, and opacity zero?
+
+display none removes element from layout completely, taking no space and inaccessible to screen readers. visibility hidden hides it but preserves space, not interactive. opacity zero makes it invisible but keeps space and remains interactive. Choose based on whether you need space preserved and interactivity maintained.
+
+---
+
+## 7. What are CSS Variables and their advantages?
+
+CSS variables are reusable values defined with -- prefix and accessed with var(). Unlike preprocessor variables, they're evaluated at runtime, can be updated with JavaScript, follow cascade rules, and can be scoped. Use them for theme colors, spacing scales, and consistent values across components.
+
+```css
+:root { --primary: #007bff; }
+.button { background: var(--primary); }
+```
+
+---
+
+## 8. What is mobile-first responsive design?
+
+Mobile-first starts with mobile styles as base, then uses min-width media queries to enhance for larger screens. It's better than desktop-first because mobile devices only load needed CSS, it's easier to enhance than strip down, and forces content prioritization. Mobile traffic often exceeds desktop, so you optimize for your primary audience.
+
+```css
+.container { width: 100%; }
+@media (min-width: 768px) { .container { width: 750px; } }
+```
+
+---
+
+## 9. What are CSS selectors and combinators?
+
+Selectors target HTML elements for styling. Basic selectors are element (div), class (.class), ID (#id), attribute ([type="text"]), and universal (*). Combinators show relationships between elements. Think of it like a family tree: descendant (space) finds any nested element at any level, child (>) finds only direct children, adjacent sibling (+) finds the immediate next sibling, and general sibling (~) finds all following siblings at the same level.
+
+**HTML structure for examples:**
+```html
+<div class="container">
+  <p>Paragraph 1</p>           <!-- Direct child of div -->
+  <section>
+    <p>Paragraph 2</p>         <!-- Nested inside section -->
+  </section>
+  <p>Paragraph 3</p>           <!-- Direct child of div -->
+</div>
+
+<h1>Title</h1>
+<p>First paragraph after h1</p>      <!-- Adjacent to h1 -->
+<p>Second paragraph after h1</p>     <!-- General sibling to h1 -->
+<div>Not a paragraph</div>
+<p>Third paragraph after h1</p>      <!-- General sibling to h1 -->
+```
+
+**Combinator examples with results:**
+
+```css
+/* 1. DESCENDANT (space) - Any p inside div, at ANY level */
+div p { color: red; }
+/* Selects: Paragraph 1, Paragraph 2, Paragraph 3
+   Why: All three are inside div (doesn't matter how deep) */
+
+/* 2. CHILD (>) - Only DIRECT p children of div */
+div > p { color: blue; }
+/* Selects: Paragraph 1, Paragraph 3
+   NOT Paragraph 2 (it's inside section, not a direct child) */
+
+/* 3. ADJACENT SIBLING (+) - The p IMMEDIATELY after h1 */
+h1 + p { color: green; }
+/* Selects: "First paragraph after h1"
+   NOT "Second paragraph" (not immediately after h1) */
+
+/* 4. GENERAL SIBLING (~) - ALL p elements after h1 at same level */
+h1 ~ p { color: purple; }
+/* Selects: "First paragraph", "Second paragraph", "Third paragraph"
+   Why: All are siblings of h1 that come after it
+   NOT the div (it's not a p element) */
+```
+
+**Visual guide:**
+```
+div (parent)
+├─ p ← Child (direct)          div > p ✓
+│                               div p ✓
+├─ section
+│  └─ p ← Descendant (nested)  div > p ✗ (not direct)
+│                               div p ✓ (any level)
+└─ p ← Child (direct)          div > p ✓
+                                div p ✓
+
+h1
+├─ p ← Adjacent (+)            h1 + p ✓  h1 ~ p ✓
+├─ p ← General sibling (~)     h1 + p ✗  h1 ~ p ✓
+├─ div ← Sibling but not p     h1 + p ✗  h1 ~ p ✗
+└─ p ← General sibling (~)     h1 + p ✗  h1 ~ p ✓
+```
+
+**Memory tricks:**
+- **Descendant (space)**: "Anyone in the family" - searches the whole tree
+- **Child (>)**: "My kids only" - direct children, not grandchildren
+- **Adjacent (+)**: "Next door neighbor" - the very next sibling
+- **General sibling (~)**: "All neighbors after me" - all following siblings
+
+---
+
+## 10. What are pseudo-classes and pseudo-elements?
+
+Pseudo-classes select elements based on state or position using single colon: :hover, :focus, :first-child, :nth-child. Pseudo-elements style parts of elements or insert content using double colons: ::before, ::after, ::first-letter. Pseudo-classes target whole elements based on conditions, pseudo-elements target parts.
+
+```css
+a:hover { color: blue; }
+p::first-letter { font-size: 2em; }
+```
+
+---
+
+## 11. What is Flexbox and its main properties?
+
+Flexbox arranges items in rows or columns. Container properties: flex-direction (row/column), justify-content (main axis alignment), align-items (cross axis alignment), flex-wrap (wrapping), gap (spacing). Item properties: flex-grow (growth factor), flex-shrink (shrink factor), flex-basis (initial size), align-self (individual alignment), order (visual order).
+
+---
+
+## 12. What is CSS Grid and when to use it?
+
+Grid creates two-dimensional layouts with rows and columns. Define structure with grid-template-columns and grid-template-rows using pixels, fr units, or repeat(). Use grid-template-areas for named regions. Properties include gap, justify-items, align-items. Use for page layouts, galleries, dashboards, and precise two-dimensional alignment.
+
+```css
+.grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
 }
 ```
 
-**Common Patterns**:
-```css
-/* Holy Grail Layout */
-.layout {
-  display: grid;
-  grid-template-areas:
-    "header header header"
-    "sidebar main aside"
-    "footer footer footer";
-  grid-template-columns: 200px 1fr 200px;
-}
+---
 
-.header { grid-area: header; }
-.sidebar { grid-area: sidebar; }
+## 13. What are CSS transitions and animations?
+
+Transitions animate property changes between two states, requiring a trigger like hover. Specify property, duration, timing function, and delay. Animations use keyframes for multi-step sequences that can run automatically and loop. Use transitions for simple hover effects, animations for complex sequences or loading spinners. Both should prefer transform and opacity for performance.
+
+```css
+.button { transition: background 0.3s ease; }
+@keyframes slideIn { from { opacity: 0; } to { opacity: 1; } }
 ```
 
 ---
 
-### Quick Comparison
+## 14. How do you center an element?
 
-| Aspect | Flexbox | Grid |
-|--------|---------|------|
-| **Dimensions** | 1D (row or column) | 2D (rows and columns) |
-| **Best for** | Components, nav bars | Layouts, galleries |
-| **Approach** | Content-first | Layout-first |
-| **Alignment** | One direction at a time | Both directions |
-| **Use when** | Items in a line | Complex structures |
-
-**Rule of thumb**: Use Flexbox for components, Grid for layouts. They work great together!
+For modern browsers, use Flexbox with justify-content center and align-items center, or Grid with place-items center. For horizontal centering of block elements, use margin zero auto. For inline elements, use text-align center on parent. These methods work for any content size and keep elements in document flow.
 
 ---
 
-## Positioning
+## 15. What is the calc function?
 
-**Theory**: Controls how elements are positioned in the document.
+calc() performs mathematical calculations mixing different units. Use it for dynamic widths accounting for fixed padding, fluid typography, full-height sections minus headers, or with CSS variables. Must include spaces around + and - operators. More powerful than preprocessor math because it's evaluated at runtime.
 
 ```css
-position: static;    /* Default, normal flow */
-position: relative;  /* Relative to normal position, creates context */
-position: absolute;  /* Relative to nearest positioned ancestor */
-position: fixed;     /* Relative to viewport, stays on scroll */
-position: sticky;    /* Relative until scroll threshold, then fixed */
-```
-
-**Sticky Example** (common interview question):
-```css
-.navbar {
-  position: sticky;
-  top: 0; /* Sticks to top when scrolling */
-  z-index: 100;
-}
+.container { width: calc(100% - 80px); height: calc(100vh - 60px); }
 ```
 
 ---
 
-## Specificity
+## 16. What is Sass/SCSS and its main features?
 
-**Theory**: Determines which CSS rule applies when multiple rules target same element.
+Sass is a CSS preprocessor extending CSS with variables, nesting, mixins (reusable style blocks), functions, and operators. Advantages: DRY principles, better organization, maintainability. Disadvantages: requires build process, variables are compile-time only. Use for large projects needing organization and consistent patterns.
 
-**Calculation (0-0-0-0)**:
-1. Inline styles (1-0-0-0)
-2. IDs (0-1-0-0)
-3. Classes, attributes, pseudo-classes (0-0-1-0)
-4. Elements, pseudo-elements (0-0-0-1)
-
-```css
-div { }                    /* 0-0-0-1 */
-.class { }                 /* 0-0-1-0 */
-#id { }                    /* 0-1-0-0 */
-div.class#id { }           /* 0-1-1-1 - this wins */
-
-/* !important overrides all (avoid!) */
-color: red !important;
-```
-
----
-
-## Responsive Design
-
-### Mobile-First Approach
-**Theory**: Start with mobile styles, add complexity for larger screens.
-
-```css
-/* Mobile first - base styles for small screens */
-.container {
-  width: 100%;
-  padding: 1rem;
-}
-
-/* Tablet and up */
-@media (min-width: 768px) {
-  .container {
-    width: 750px;
-    margin: 0 auto;
-  }
-}
-
-/* Desktop and up */
-@media (min-width: 1024px) {
-  .container {
-    width: 960px;
-  }
-}
-```
-
-**Why mobile-first**: Better performance (mobile loads less CSS), easier to enhance than strip down.
-
----
-
-### Responsive Units
-
-```css
-/* Relative units */
-rem  /* Relative to root font-size (most versatile) */
-em   /* Relative to parent font-size (careful with nesting) */
-%    /* Relative to parent dimension */
-vw   /* 1% of viewport width */
-vh   /* 1% of viewport height */
-
-/* Examples */
-html { font-size: 16px; }
-h1 { font-size: 2rem; }      /* 32px */
-padding { padding: 1.5rem; } /* 24px */
-width { width: 50vw; }       /* Half viewport width */
-```
-
-**Best practice**: Use `rem` for font sizes and spacing, `%` or `vw/vh` for layouts.
-
----
-
-## Modern CSS Features
-
-### CSS Variables (Custom Properties)
-**Theory**: Reusable values that can change dynamically.
-
-```css
-:root {
-  --primary-color: #007bff;
-  --spacing: 8px;
-}
-
+```scss
+$primary: #007bff;
 .button {
-  background: var(--primary-color);
-  padding: calc(var(--spacing) * 2);
-}
-
-/* Change with JavaScript */
-document.documentElement.style.setProperty('--primary-color', '#ff0000');
-```
-
-**Interview question**: "Why use CSS variables over Sass variables?"
-**Answer**: CSS variables are live (can change at runtime), work with JavaScript, and cascade/inherit.
-
----
-
-### Calc Function
-```css
-width: calc(100% - 80px);
-font-size: calc(1rem + 2vw);      /* Fluid typography */
-height: calc(100vh - 60px);       /* Full height minus header */
-```
-
----
-
-### Clamp (Responsive Typography)
-**Theory**: Sets min, preferred, and max values.
-
-```css
-/* Font size: min 1rem, ideal 2vw, max 3rem */
-font-size: clamp(1rem, 2vw, 3rem);
-
-/* No media queries needed! */
-```
-
----
-
-### Gap Property (Flexbox & Grid)
-**Theory**: Modern way to add spacing between items.
-
-```css
-/* Instead of margins on children */
-.flex-container {
-  display: flex;
-  gap: 1rem; /* Space between all items */
-}
-
-.grid-container {
-  display: grid;
-  gap: 1rem 2rem; /* row-gap column-gap */
+  background: $primary;
+  &:hover { background: darken($primary, 10%); }
 }
 ```
 
 ---
 
-### Aspect Ratio
-```css
-.video {
-  aspect-ratio: 16 / 9; /* Maintains ratio */
-}
+## 17. What are Sass mixins?
 
-.square {
-  aspect-ratio: 1; /* Perfect square */
+Mixins are reusable style blocks accepting parameters. Define with @mixin, include with @include. Use for responsive breakpoints, vendor prefixes, common patterns like centering, and typography styles. They prevent code duplication and create consistent patterns.
+
+```scss
+@mixin button($bg) {
+  background: $bg;
+  &:hover { background: darken($bg, 10%); }
 }
+.btn { @include button(#007bff); }
 ```
 
 ---
 
-## Common Interview Questions
+## 18. What is BEM?
 
-### Q1: Center a div horizontally and vertically
+BEM (Block Element Modifier) is a naming convention: block__element--modifier. Blocks are standalone entities, elements are parts of blocks, modifiers are variations. Advantages: clear structure, no specificity issues, self-documenting. Best for large projects and component libraries.
 
-```css
-/* Method 1: Flexbox (modern, best) */
-.parent {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Method 2: Grid (even simpler) */
-.parent {
-  display: grid;
-  place-items: center;
-}
-
-/* Method 3: Position + Transform (old school) */
-.child {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
+```html
+<div class="card card--featured">
+  <h2 class="card__title">Title</h2>
+</div>
 ```
 
 ---
 
-### Q2: `display: none` vs `visibility: hidden` vs `opacity: 0`
+## 19. What is Tailwind CSS?
 
-| Property | Space Taken | Visible | Interactive | Use Case |
-|----------|-------------|---------|-------------|----------|
-| `display: none` | No | No | No | Remove from layout |
-| `visibility: hidden` | Yes | No | No | Hide but keep space |
-| `opacity: 0` | Yes | No | Yes | Fade animations |
+Tailwind is a utility-first framework with single-purpose classes. Instead of semantic names, combine utilities like bg-blue-500 text-white px-4 py-2. Advantages: no naming fatigue, consistent design system, small bundles with purging. Disadvantages: verbose HTML, harder to read. Use for rapid prototyping and component-based apps.
 
----
-
-### Q3: Block vs Inline vs Inline-Block
-
-```css
-display: block;        /* Full width, new line, can set width/height */
-display: inline;       /* Content width, same line, can't set width/height */
-display: inline-block; /* Content width, same line, CAN set width/height */
+```html
+<button class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded">
+  Click me
+</button>
 ```
 
 ---
 
-### Q4: Pseudo-classes vs Pseudo-elements
+## Summary
 
-```css
-/* Pseudo-classes: element state (single :) */
-a:hover { }
-li:first-child { }
-input:focus { }
-div:nth-child(2) { }
-
-/* Pseudo-elements: part of element (double ::) */
-p::before { content: "→"; }
-p::after { content: "←"; }
-p::first-letter { }
-input::placeholder { }
-```
-
----
-
-### Q5: CSS Transitions vs Animations
-
-**Transitions**: Simple A→B changes triggered by state change.
-```css
-.button {
-  background: blue;
-  transition: background 0.3s ease;
-}
-.button:hover {
-  background: red;
-}
-```
-
-**Animations**: Complex multi-step animations, can loop.
-```css
-@keyframes slideIn {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(0); }
-}
-
-.element {
-  animation: slideIn 0.5s ease-out;
-}
-```
-
-**When to use**: Transitions for simple hover/focus effects. Animations for complex multi-step sequences.
-
----
-
-## Performance Best Practices
-
-### Avoid Expensive Properties
-```css
-/* ❌ Triggers layout (expensive) */
-width, height, margin, padding, top, left
-
-/* ⚠️ Triggers paint (moderate) */
-color, background, border-radius, box-shadow
-
-/* ✅ Composite only (cheap) */
-transform, opacity
-```
-
-**For smooth animations, stick to `transform` and `opacity`!**
-
----
-
-### Use `will-change` Sparingly
-```css
-.animated-element {
-  will-change: transform; /* Hint browser to optimize */
-}
-
-/* Remove after animation */
-.done {
-  will-change: auto;
-}
-```
-
-**Warning**: Don't overuse. Creates new layers = more memory.
-
----
-
-## Common Patterns
-
-### Truncate Text with Ellipsis
-```css
-/* Single line */
-.truncate {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Multiple lines (3 lines) */
-.truncate-multi {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-```
-
----
-
-### Responsive Image
-```css
-img {
-  max-width: 100%;
-  height: auto;
-  display: block; /* Removes bottom spacing */
-}
-```
-
----
-
-### Smooth Scrolling
-```css
-html {
-  scroll-behavior: smooth;
-}
-```
-
----
-
-## Interview Tips
-
-1. **Flexbox vs Grid**: Know when to use each (1D vs 2D)
-2. **Box-sizing**: Always explain `border-box` vs `content-box`
-3. **Specificity**: Be able to calculate (0-0-0-0)
-4. **Mobile-first**: Understand `min-width` media queries
-5. **Performance**: Know `transform` and `opacity` are cheapest
-6. **CSS Variables**: Explain advantages over preprocessor variables
-7. **Positioning**: Understand all 5 types, especially `sticky`
-8. **Responsive**: Know multiple centering techniques
-9. **Modern features**: Mention `gap`, `clamp`, `aspect-ratio`
-10. **BEM naming**: Bonus points if you know `block__element--modifier`
-
----
-
-## Best Practices Checklist
-
-- ✅ Use `box-sizing: border-box` globally
-- ✅ Mobile-first responsive design
-- ✅ Use CSS variables for theming
-- ✅ Use `rem` for font sizes
-- ✅ Use `gap` instead of margins in flex/grid
-- ✅ Avoid `!important` (specificity problem)
-- ✅ Use `transform` and `opacity` for animations
-- ✅ Minimize nesting (max 3 levels)
-- ✅ Use semantic class names
-- ✅ Group related properties together
+Key CSS concepts: box model with border-box, Flexbox vs Grid (1D vs 2D), positioning especially sticky, cascade with origin/specificity/source order, specificity calculation, selectors and combinators (descendant, child, sibling), multiple centering methods, display/visibility/opacity differences, CSS variables advantages, mobile-first approach, pseudo-classes vs pseudo-elements, transitions vs animations, modern features like calc and gap, and methodologies like BEM and Tailwind with their trade-offs.

@@ -1,326 +1,243 @@
-# TypeScript Interview Preparation Guide
+# TypeScript Interview Guide - Questions & Answers
 
-## What is TypeScript?
-
-**Theory**: TypeScript is a statically-typed superset of JavaScript that compiles to plain JavaScript. It adds type annotations to catch errors at compile-time instead of runtime.
-
-**Key Benefits**:
-- **Early error detection** - Catches bugs before runtime
-- **Better IDE support** - Autocomplete, refactoring, navigation
-- **Self-documenting code** - Types serve as inline documentation
-- **Safer refactoring** - Type system ensures changes don't break code
-- **Enhanced maintainability** - Easier to understand large codebases
-
-**Use cases**: Large applications, team projects, Next.js/React applications, enterprise software
+TypeScript interview preparation with concise paragraph-style answers and code examples.
 
 ---
 
-## Primitive Types
+## 1. What is TypeScript and why use it?
 
-**Theory**: Basic building blocks for type annotations. TypeScript infers types when possible.
+TypeScript is a statically-typed superset of JavaScript that compiles to plain JavaScript. It catches errors at compile-time instead of runtime through type annotations. Benefits include early error detection, better IDE support with autocomplete and refactoring, self-documenting code, safer refactoring, and enhanced maintainability for large codebases. Use it for team projects, large applications, and enterprise software.
+
+---
+
+## 2. What are primitive types in TypeScript?
+
+TypeScript has standard primitives like string, number, boolean, along with null, undefined, void for no return value, and never for functions that never return. There's also any which opts out of type checking (avoid it) and unknown which is a type-safe alternative requiring type checks before use. TypeScript often infers types from initial values, so explicit annotations aren't always needed.
 
 ```typescript
-// Explicit types
-let name: string = "John";
-let age: number = 30;
-let isActive: boolean = true;
-
-// Type inference (preferred)
-let name = "John";  // TypeScript knows it's string
-let age = 30;       // TypeScript knows it's number
-```
-
-**Key types**:
-- `string`, `number`, `boolean` - Standard primitives
-- `null`, `undefined` - Absence of value
-- `any` - Opt-out of type checking (avoid!)
-- `unknown` - Type-safe version of any (requires type checking)
-- `void` - Function returns nothing
-- `never` - Function never returns (throws error or infinite loop)
-
-**Arrays**:
-```typescript
-let numbers: number[] = [1, 2, 3];
-let strings: Array<string> = ["a", "b"];
+let name = "John"; // inferred as string
+let user: User | null = null; // explicit when needed
 ```
 
 ---
 
-## Interfaces
+## 3. What's the difference between interface and type?
 
-**Theory**: Define the structure/shape of objects. Interfaces describe what properties an object should have and their types.
+Interface defines object shapes and supports extends keyword and declaration merging. Type can alias any type including primitives, unions, intersections, and computed properties but cannot merge. Use interface for object/class shapes and public APIs. Use type for unions, primitive aliases, intersections, and complex types. Most teams default to interface for objects.
 
 ```typescript
+// ✓ Use INTERFACE for:
+
+// 1. Object/Class shapes
 interface User {
   id: number;
   name: string;
   email: string;
-  age?: number;           // Optional property
-  readonly createdAt: Date; // Cannot be modified
 }
 
-const user: User = {
-  id: 1,
-  name: "John",
-  email: "john@example.com",
-  createdAt: new Date()
-};
-```
-
-**Extending interfaces**:
-```typescript
+// 2. Extending other interfaces
 interface Admin extends User {
   role: string;
   permissions: string[];
 }
-```
 
-**Declaration Merging**: Interfaces with same name automatically merge:
-```typescript
+// 3. Declaration merging (adding properties later)
 interface Window {
   customProperty: string;
 }
-// Now Window type includes customProperty
-```
+interface Window {
+  anotherProperty: number;
+}
+// Window now has both properties
 
----
-
-## Type Aliases
-
-**Theory**: Create custom names for any type - primitives, unions, intersections, objects.
-
-```typescript
-// Primitive alias
-type ID = string | number;
-
-// Union types
-type Status = "active" | "inactive" | "pending";
-
-// Intersection types - Combine multiple types
-type User = {
+// 4. Classes implementing contracts
+class UserAccount implements User {
+  id: number;
   name: string;
   email: string;
-};
+}
 
-type Admin = {
+// 5. React component props (convention)
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+}
+
+// ✓ Use TYPE for:
+
+// 1. Union types
+type Status = "active" | "inactive" | "pending";
+type Result = Success | Error;
+
+// 2. Primitive aliases
+type ID = string | number;
+type Email = string;
+
+// 3. Intersections
+type Admin = User & {
   role: string;
   permissions: string[];
 };
 
-type AdminUser = User & Admin;  // Has all properties from both
-// { name: string; email: string; role: string; permissions: string[] }
+// WHEN EITHER WORKS:
 
-// Object type
-type Person = {
-  id: ID;
+// Interface version
+interface Product {
   name: string;
-  status: Status;
+  price: number;
+}
+
+// Type version (equivalent)
+type Product = {
+  name: string;
+  price: number;
 };
 
-// Function type
-type Callback = (data: string) => void;
+// Rule of thumb: Use interface for objects, type for everything else
 ```
 
 ---
 
-## Interface vs Type - Critical Interview Topic
+## 4. Explain generics and when to use them.
 
-**Theory**: Both can define object shapes, but have different capabilities and use cases.
+Generics create reusable, type-safe code that works with multiple types, like function parameters but for types. Without generics, you'd use any and lose type safety. With generics, TypeScript maintains the correct type through the function. Use them for reusable functions, API responses, data structures, React components, and custom hooks.
 
-| Feature | Interface | Type |
-|---------|-----------|------|
-| **Syntax** | `interface User {}` | `type User = {}` |
-| **Extend** | `extends` keyword | Intersection `&` |
-| **Merge** | ✓ Auto-merges declarations | ✗ Cannot merge |
-| **Primitives** | ✗ Objects only | ✓ Can alias any type |
-| **Union** | ✗ | ✓ `type A = B \| C` |
-| **Computed** | ✗ | ✓ Dynamic properties |
-
-**When to use Interface**:
-- Defining object/class shapes
-- Need declaration merging (extending browser APIs)
-- Building public APIs
-- Following team conventions
-
-**When to use Type**:
-- Union types (`string | number`)
-- Intersections (`A & B`)
-- Primitive aliases (`type ID = string`)
-- Tuples, mapped types, conditional types
-
-**Example**:
-```typescript
-// Interface - Object shapes
-interface User {
-  name: string;
-  age: number;
-}
-
-// Interface extending
-interface Admin extends User {
-  role: string;
-}
-
-// Type - Unions
-type Status = "active" | "inactive";
-
-// Type - Intersections (combine types)
-type Timestamps = {
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type UserWithTimestamps = User & Timestamps;
-// { name: string; age: number; createdAt: Date; updatedAt: Date }
-```
-
-**Recommendation**: Use `interface` for objects by default. Use `type` for everything else.
-
----
-
-## Utility Types - Commonly Used
-
-**Theory**: Built-in TypeScript helpers that transform existing types. Saves time and reduces boilerplate.
-
-**1. Partial<T>** - Make all properties optional:
-```typescript
-interface User {
-  name: string;
-  age: number;
-  email: string;
-}
-
-function updateUser(id: number, updates: Partial<User>) {
-  // Can update any subset of User properties
-}
-
-updateUser(1, { email: "new@example.com" }); // Valid
-```
-
-**2. Pick<T, Keys>** - Select specific properties:
-```typescript
-type UserPreview = Pick<User, "name" | "email">;
-// { name: string; email: string }
-```
-
-**3. Omit<T, Keys>** - Remove specific properties:
-```typescript
-type UserWithoutEmail = Omit<User, "email">;
-// { name: string; age: number }
-```
-
-**4. Required<T>** - Make all properties required:
-```typescript
-type RequiredUser = Required<Partial<User>>;
-```
-
-**5. Readonly<T>** - Make all properties readonly:
-```typescript
-type ImmutableUser = Readonly<User>;
-```
-
-**6. Record<Keys, Type>** - Create object type with specific keys:
-```typescript
-type Role = "admin" | "user" | "guest";
-type Permissions = Record<Role, string[]>;
-// { admin: string[]; user: string[]; guest: string[] }
-```
-
-**7. ReturnType<T>** - Extract function return type:
-```typescript
-function getUser() {
-  return { name: "John", age: 30 };
-}
-
-type User = ReturnType<typeof getUser>;
-// { name: string; age: number }
-```
-
-**Why use**: DRY principle - don't repeat type definitions, leverage existing types.
-
----
-
-## Generics - Critical Interview Topic
-
-**Theory**: Write reusable, type-safe code that works with multiple types. Like function parameters, but for types.
-
-**Problem without generics**:
-```typescript
-function getFirst(arr: any[]): any {
-  return arr[0]; // Returns 'any' - lose type safety
-}
-```
-
-**Solution with generics**:
 ```typescript
 function getFirst<T>(arr: T[]): T {
   return arr[0];
 }
-
-const num = getFirst([1, 2, 3]);     // number
-const str = getFirst(["a", "b"]);    // string
+const num = getFirst([1, 2, 3]); // number
+const str = getFirst(["a", "b"]); // string
 ```
-
-**Generic constraints**: Restrict what types can be used:
-```typescript
-interface HasLength {
-  length: number;
-}
-
-function logLength<T extends HasLength>(item: T): void {
-  console.log(item.length);
-}
-
-logLength("hello");    // OK - string has length
-logLength([1, 2, 3]);  // OK - array has length
-logLength(123);        // Error - number doesn't have length
-```
-
-**Generic interfaces** (API responses):
-```typescript
-interface ApiResponse<T> {
-  data: T;
-  status: number;
-  message: string;
-}
-
-const userResponse: ApiResponse<User> = {
-  data: { name: "John", age: 30 },
-  status: 200,
-  message: "Success"
-};
-```
-
-**When to use generics**:
-- Reusable functions/classes that work with multiple types
-- API responses
-- Data structures (arrays, maps, sets)
-- React components
-- Custom hooks
 
 ---
 
-## TypeScript with React
+## 5. What are the most common utility types?
 
-### Component Props
+Partial makes all properties optional for updates. Pick selects specific properties for DTOs. Omit removes properties for security. Required makes all optional properties required. Readonly prevents modifications. Record creates typed objects with specific keys. ReturnType extracts function return types. These reduce code duplication by transforming existing types.
 
-**Theory**: Define the structure and types of props your component accepts.
+```typescript
+// Base type for examples
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  age?: number;
+}
+
+// 1. Partial<T> - Makes all properties optional
+type UserUpdate = Partial<User>;
+// { id?: number; name?: string; email?: string; password?: string; age?: number }
+
+// 2. Required<T> - Makes all properties required
+type CompleteUser = Required<User>;
+// { id: number; name: string; email: string; password: string; age: number }
+
+// 3. Readonly<T> - Makes all properties readonly
+type ImmutableUser = Readonly<User>;
+// { readonly id: number; readonly name: string; ... }
+
+// 4. Pick<T, K> - Selects specific properties
+type UserPreview = Pick<User, "name" | "email">;
+// { name: string; email: string }
+
+// 5. Omit<T, K> - Removes specific properties
+type SafeUser = Omit<User, "password">;
+// { id: number; name: string; email: string; age?: number }
+
+// 6. Record<K, T> - Creates object type with specific keys
+type UserRoles = Record<string, User>;
+// { [key: string]: User }
+type Permissions = Record<"read" | "write" | "delete", boolean>;
+// { read: boolean; write: boolean; delete: boolean }
+
+```
+
+---
+
+## 6. How do you type React component props?
+
+Define props with an interface containing property names, types, and optional markers. Use React.ReactNode for children. Generic components use type parameters to work with any data type. Always specify event handler parameter types and return types.
 
 ```typescript
 interface ButtonProps {
   label: string;
   onClick: () => void;
   variant?: "primary" | "secondary";
-  disabled?: boolean;
   children?: React.ReactNode;
-}
-
-function Button({ label, onClick, variant = "primary", disabled }: ButtonProps) {
-  return <button onClick={onClick} disabled={disabled}>{label}</button>;
 }
 ```
 
-**Generic components**:
+---
+
+## 7. How do you type React hooks?
+
+Let TypeScript infer types from initial values when possible. Be explicit with union types like User | null for nullable state. Use HTMLInputElement for useRef with DOM elements. Custom hooks use generics to return properly typed data. Event handlers need specific React event types.
+
+```typescript
+const [name, setName] = useState("John"); // inferred
+const [user, setUser] = useState<User | null>(null); // explicit
+const inputRef = useRef<HTMLInputElement>(null);
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {};
+```
+
+---
+
+## 8. What's the difference between any and unknown?
+
+Any opts out of type checking completely, allowing any operation without errors even if it crashes at runtime. Unknown is type-safe and requires type checking before use. Always prefer unknown over any. Use any only when migrating JavaScript to TypeScript or dealing with truly dynamic data.
+
+```typescript
+let x: any = "hello";
+x.foo.bar(); // No error, crashes at runtime
+
+let y: unknown = "hello";
+if (typeof y === "string") y.toUpperCase(); // Must check first
+```
+
+
+---
+
+## 10. What are discriminated unions?
+
+Discriminated unions are a type-safe way to handle different states where each variant has a unique literal property as a discriminant. TypeScript uses the discriminant in switch statements to narrow types automatically. This prevents invalid states and ensures exhaustive checking.
+
+```typescript
+type State =
+  | { status: "loading" }
+  | { status: "success"; data: string }
+  | { status: "error"; error: string };
+
+function handle(state: State) {
+  if (state.status === "success") {
+    console.log(state.data); // TypeScript knows data exists
+  }
+}
+```
+
+---
+
+## 11. What are type guards?
+
+Type guards are functions that narrow down types at runtime, helping TypeScript understand what type a value is. Built-in guards include typeof and instanceof. Custom type guards use the is keyword. Use them for API responses, user input validation, and runtime type checking.
+
+```typescript
+function isUser(obj: any): obj is User {
+  return obj && typeof obj.name === "string";
+}
+
+if (isUser(data)) {
+  console.log(data.name); // TypeScript knows it's User
+}
+```
+
+---
+
+## 12. How do you use generics with React components?
+
+Generic components accept a type parameter to work with any data type while maintaining type safety. This is useful for lists, tables, or any component that displays dynamic data. The type parameter is inferred from props, so TypeScript knows the exact type throughout the component.
+
 ```typescript
 interface ListProps<T> {
   items: T[];
@@ -328,424 +245,116 @@ interface ListProps<T> {
 }
 
 function List<T>({ items, renderItem }: ListProps<T>) {
-  return (
-    <ul>
-      {items.map((item, i) => <li key={i}>{renderItem(item)}</li>)}
-    </ul>
-  );
+  return <ul>{items.map((item, i) => <li key={i}>{renderItem(item)}</li>)}</ul>;
 }
-
-// Usage - TypeScript knows items are User[]
-<List items={users} renderItem={(user) => <span>{user.name}</span>} />
 ```
 
 ---
 
-### Typing Hooks
+## 13. What is type assertion and when should you use it?
 
-**useState**: Type inferred from initial value, or explicit when nullable:
+Type assertion tells TypeScript "trust me, I know the type" using the as syntax. Use it for DOM manipulation, when you have more information than TypeScript, or with poorly-typed libraries. It bypasses type checking and can cause runtime errors, so use sparingly. Prefer type guards with validation over assertions.
+
 ```typescript
-const [name, setName] = useState("John");     // string
-const [count, setCount] = useState(0);         // number
-const [user, setUser] = useState<User | null>(null); // explicit
+const input = document.querySelector("input") as HTMLInputElement;
+
+// Better approach with validation
+function isUser(obj: any): obj is User {
+  return obj && typeof obj.name === "string";
+}
 ```
 
-**useRef**: Type for DOM elements:
-```typescript
-const inputRef = useRef<HTMLInputElement>(null);
-```
+---
 
-**useContext**: Type the context value:
+## 14. How do you extend interfaces vs intersect types?
+
+Interface uses the extends keyword to inherit properties from another interface. Type uses intersection with & to combine multiple types into one. Both achieve similar results, but extends is more explicit for inheritance while intersections are more flexible for combining unrelated types.
+
 ```typescript
-interface ThemeContextType {
-  theme: "light" | "dark";
-  toggleTheme: () => void;
+interface Admin extends User {
+  role: string;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+type AdminUser = User & { role: string };
 ```
 
-**Custom hooks with generics**:
+---
+
+## 15. What are generic constraints?
+
+Generic constraints limit what types can be used with a generic by requiring the type to have certain properties or methods. The constraint uses `extends` to say "the type must have at least these properties". This ensures you can safely access those properties inside the function.
+
+```typescript
+// Constraint: T must have a length property
+interface HasLength {
+  length: number;
+}
+
+function logLength<T extends HasLength>(item: T) {
+  console.log(item.length);
+}
+
+// ✓ Works - strings have .length property
+logLength("hello"); // OK - "hello".length = 5
+
+// ✓ Works - arrays have .length property
+logLength([1, 2, 3]); // OK - [1,2,3].length = 3
+
+// ✗ Error - numbers DON'T have .length property
+logLength(123); // Error - 123.length doesn't exist
+
+// Why? In JavaScript:
+"hello".length;  // 5 - strings have length ✓
+[1, 2, 3].length; // 3 - arrays have length ✓
+(123).length;     // undefined - numbers don't have length ✗
+```
+
+**Key point**: The constraint checks if the type has the required property, not if it matches the value. Strings and arrays have `.length`, numbers don't.
+
+---
+
+## 16. How do you type custom hooks with generics?
+
+Custom hooks use generics to return properly typed data based on the type parameter. This maintains type safety throughout the component using the hook. The generic is passed when calling the hook, and TypeScript infers all return types from it.
+
 ```typescript
 function useFetch<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // ... fetch logic
-
+  // fetch logic
   return { data, loading };
 }
 
-// Usage - data is User[] | null
-const { data } = useFetch<User[]>("/api/users");
+const { data } = useFetch<User[]>("/api/users"); // data is User[] | null
 ```
 
 ---
 
-### Event Handlers
+## 17. What's declaration merging in interfaces?
 
-**Theory**: React event types are different from native DOM events. Use React's synthetic events.
+Declaration merging happens when multiple interface declarations with the same name automatically combine into a single interface. This is useful for extending global types like Window or adding properties to third-party libraries. Types cannot merge, only interfaces can.
 
 ```typescript
-const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  console.log(e.target.value);
-};
-
-const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-};
-
-const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-  console.log("Clicked");
-};
+interface Window {
+  customProperty: string;
+}
+// Now Window type includes both default props and customProperty
 ```
-
-**Common event types**:
-- `React.ChangeEvent<HTMLInputElement>` - Input changes
-- `React.FormEvent<HTMLFormElement>` - Form submission
-- `React.MouseEvent<HTMLButtonElement>` - Mouse clicks
-- `React.KeyboardEvent<HTMLInputElement>` - Keyboard events
 
 ---
 
-## Advanced Patterns
+## 17. What are mapped types?
 
-### Discriminated Unions
-
-**Theory**: Type-safe way to handle different states. Each variant has a unique literal property ("discriminant").
+Mapped types transform existing types by iterating over properties. Built-in utility types like Partial, Readonly, and Pick are implemented using mapped types. You can create custom mapped types to transform properties in specific ways.
 
 ```typescript
-type RequestState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "success"; data: string }
-  | { status: "error"; error: string };
-
-function handleRequest(state: RequestState) {
-  switch (state.status) {
-    case "idle":
-      return "Not started";
-    case "loading":
-      return "Loading...";
-    case "success":
-      return `Data: ${state.data}`; // TypeScript knows data exists
-    case "error":
-      return `Error: ${state.error}`; // TypeScript knows error exists
-  }
-}
-```
-
-**Benefits**: Type-safe state machines, exhaustive checking, prevents invalid states.
-
----
-
-### Type Guards
-
-**Theory**: Functions that narrow down types at runtime. Helps TypeScript understand what type a value is.
-
-```typescript
-// typeof guard
-function processValue(value: string | number) {
-  if (typeof value === "string") {
-    return value.toUpperCase(); // TypeScript knows it's string
-  }
-  return value.toFixed(2); // TypeScript knows it's number
-}
-
-// Custom type guard
-function isUser(obj: any): obj is User {
-  return obj && typeof obj.name === "string" && typeof obj.email === "string";
-}
-
-function processData(data: unknown) {
-  if (isUser(data)) {
-    console.log(data.name); // TypeScript knows it's User
-  }
-}
-```
-
-**Use cases**: API responses, user input validation, runtime type checking.
-
----
-
-## Interview Questions
-
-### Q: "When would you use `interface` vs `type`?"
-
-**Answer**: "Both define object shapes, but have key differences:
-
-**Use Interface when:**
-- Defining object/class shapes - clearer intent
-- Need declaration merging (extending Window, etc.)
-- Building public APIs
-- Most object types
-
-**Use Type when:**
-- Creating unions: `type Status = 'active' | 'inactive'`
-- Primitive aliases: `type ID = string | number`
-- Intersections, tuples, complex types
-
-**Example**:
-```typescript
-// Interface for objects
-interface User {
-  name: string;
-  age: number;
-}
-
-// Type for unions
-type Status = 'active' | 'inactive';
-type Result = Success | Error;
-```
-
-**My approach**: Default to `interface` for objects, use `type` for everything else."
-
----
-
-### Q: "Explain generics and when you'd use them"
-
-**Answer**: "Generics create reusable, type-safe code that works with multiple types.
-
-**Without generics** - lose type safety:
-```typescript
-function getFirst(arr: any[]): any {
-  return arr[0]; // Returns any
-}
-```
-
-**With generics** - maintain type safety:
-```typescript
-function getFirst<T>(arr: T[]): T {
-  return arr[0];
-}
-
-const num = getFirst([1, 2, 3]);  // Returns number
-```
-
-**Real-world uses:**
-- API responses: `ApiResponse<User>`
-- Reusable components: `List<T>`
-- Custom hooks: `useFetch<User[]>(url)`
-- Data structures
-
-Generics maintain type safety while allowing flexibility."
-
----
-
-### Q: "What are utility types? Which do you use most?"
-
-**Answer**: "Built-in TypeScript helpers for type transformations:
-
-**Most common:**
-
-**Partial** - Make all properties optional (for updates):
-```typescript
-function updateUser(id: number, updates: Partial<User>) {}
-```
-
-**Pick** - Select specific properties (for DTOs):
-```typescript
-type UserPreview = Pick<User, 'name' | 'email'>;
-```
-
-**Omit** - Remove properties (for security):
-```typescript
-type UserWithoutPassword = Omit<User, 'password'>;
-```
-
-**Record** - Create typed objects:
-```typescript
-type Permissions = Record<Role, string[]>;
-```
-
-These save time and reduce code duplication by leveraging existing types."
-
----
-
-### Q: "How do you type React components and hooks?"
-
-**Answer**: "Here's my approach:
-
-**Props with interface:**
-```typescript
-interface ButtonProps {
-  label: string;
-  onClick: () => void;
-  variant?: 'primary' | 'secondary';
-  children?: React.ReactNode;
-}
-```
-
-**Event handlers:**
-```typescript
-const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  console.log(e.target.value);
+type Readonly<T> = {
+  readonly [P in keyof T]: T[P];
 };
 ```
 
-**Hooks - let TypeScript infer when possible:**
-```typescript
-const [name, setName] = useState('John'); // Inferred as string
-
-// Explicit when nullable
-const [user, setUser] = useState<User | null>(null);
-
-// useRef for DOM
-const inputRef = useRef<HTMLInputElement>(null);
-```
-
-**Custom hooks with generics:**
-```typescript
-function useFetch<T>(url: string) {
-  const [data, setData] = useState<T | null>(null);
-  return { data };
-}
-
-const { data } = useFetch<User[]>('/api/users');
-```
-
-**Key principle**: Let TypeScript infer when possible, be explicit when necessary."
-
 ---
 
-### Q: "Difference between `any` and `unknown`?"
+## Summary
 
-**Answer**: "Both represent uncertain types, but `unknown` is type-safe:
-
-**any** - Opts out of type checking (dangerous):
-```typescript
-let value: any = "hello";
-value.foo.bar(); // No error, crashes at runtime
-```
-
-**unknown** - Requires type checking (safe):
-```typescript
-let value: unknown = "hello";
-value.toUpperCase(); // Error - must check type first
-
-if (typeof value === 'string') {
-  value.toUpperCase(); // OK
-}
-```
-
-**Rule**: Always prefer `unknown` over `any`. Use `any` only when absolutely necessary (migrating JS to TS)."
-
----
-
-### Q: "What is type assertion and when to use it?"
-
-**Answer**: "Type assertion tells TypeScript 'trust me, I know the type.' Two syntaxes:
-
-```typescript
-// as syntax (preferred)
-const value = response as User;
-
-// angle bracket (avoid in JSX)
-const value = <User>response;
-```
-
-**When to use:**
-- Working with DOM: `const input = document.querySelector('input') as HTMLInputElement`
-- Type narrowing when you have more info than TypeScript
-- Third-party libraries with poor types
-
-**Warning**: Bypasses type checking - can cause runtime errors. Better approach is type guards:
-
-```typescript
-// ❌ Assertion without validation
-const user = data as User;
-
-// ✓ Type guard with validation
-function isUser(obj: any): obj is User {
-  return obj && typeof obj.name === 'string';
-}
-
-if (isUser(data)) {
-  // Safe to use
-}
-```
-
-Use sparingly and validate when possible."
-
----
-
-## Best Practices
-
-1. **Enable strict mode** in tsconfig.json
-2. **Avoid `any`** - Use `unknown` if type is uncertain
-3. **Let TypeScript infer** - Don't over-annotate
-4. **Prefer `interface`** for object shapes
-5. **Use utility types** (Partial, Pick, Omit) over manual definitions
-6. **Type function parameters** explicitly
-7. **Use generics** for reusable code
-8. **Validate before type assertions**
-9. **Use discriminated unions** for complex state
-10. **Keep types DRY** - reuse and compose
-
----
-
-## Common Mistakes
-
-**❌ Using `any` everywhere**:
-```typescript
-function process(data: any) { } // Defeats TypeScript purpose
-```
-
-**✓ Use proper types or `unknown`**:
-```typescript
-function process(data: User) { }
-// or
-function process(data: unknown) {
-  if (isUser(data)) { /* safe */ }
-}
-```
-
-**❌ Not using utility types**:
-```typescript
-type UpdateUser = {
-  name?: string;
-  email?: string;
-  age?: number;
-};
-```
-
-**✓ Use Partial**:
-```typescript
-type UpdateUser = Partial<User>;
-```
-
-**❌ Type assertion without validation**:
-```typescript
-const user = response as User; // Dangerous
-```
-
-**✓ Validate first**:
-```typescript
-if (isUser(response)) {
-  // Safe
-}
-```
-
----
-
-## Key Concepts Checklist
-
-**Basics:**
-- ✓ Primitive types (string, number, boolean)
-- ✓ Arrays and object types
-- ✓ Type inference
-
-**Core Concepts:**
-- ✓ Interfaces vs Types (when to use each)
-- ✓ Utility types (Partial, Pick, Omit, Record)
-- ✓ Generics (reusable, type-safe code)
-
-**React Integration:**
-- ✓ Component props typing
-- ✓ Event handler types
-- ✓ Hook typing (useState, useRef, custom hooks)
-
-**Advanced:**
-- ✓ Discriminated unions
-- ✓ Type guards
-- ✓ any vs unknown
+Key TypeScript concepts: primitive types with inference, interface vs type (objects vs unions), generics for reusable type-safe code, utility types (Partial, Pick, Omit, Record) to transform types, React typing with props interfaces and hook inference, any vs unknown (prefer unknown), discriminated unions for state machines, type guards for runtime checks, generic constraints, custom hooks with generics, and type assertions used sparingly. Always enable strict mode, avoid any, let TypeScript infer when possible, and validate before assertions.

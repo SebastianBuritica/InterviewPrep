@@ -19,15 +19,42 @@ import { useState, useEffect } from 'react';
 
 const Challenge1 = () => {
   // TODO: Add your state here
+  const [users, setUsers] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   // TODO: Add your useEffect here
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch('https://jsonplaceholder.typicode.com/users')
+        if (!response.ok) throw new Error(console.error('Error with request'))
+          const data = await response.json()
+        if (isMounted) setUsers(data)
+      } catch(err) {
+        if (isMounted) setError(err.message)
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [])
+
+  if (isLoading) return <div style={{padding: '15px', margin: '10px 0'}}>Is loading...</div>
+  if (error) return <div style={{padding: '15px', margin: '10px 0'}}>Error encountered: {error}</div>
 
   return (
     <div style={{ padding: '20px' }}>
       <h2>Challenge 1: User List</h2>
-      {/* TODO: Implement loading state */}
-      {/* TODO: Implement error state */}
+      
       {/* TODO: Implement user list */}
+      {users.map(user => 
+        <div key={user.id}>{user.name}</div>
+      )}
     </div>
   );
 };
